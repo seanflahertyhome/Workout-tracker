@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#1e40af">
+    <meta name="description" content="Father & Son Workout Tracker">
+    <title>Workout Tracker</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%231e40af' width='100' height='100' rx='20'/><text x='50' y='65' font-size='50' text-anchor='middle' fill='white'>💪</text></svg>">
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        * { -webkit-tap-highlight-color: transparent; }
+        body { overscroll-behavior: none; }
+        .card-flip { perspective: 1000px; }
+        .card-inner { transition: transform 0.6s; transform-style: preserve-3d; }
+        .card-flip.flipped .card-inner { transform: rotateY(180deg); }
+        .card-front, .card-back { backface-visibility: hidden; }
+        .card-back { transform: rotateY(180deg); }
+        @keyframes pulse-ring { 0% { transform: scale(0.8); opacity: 1; } 100% { transform: scale(1.3); opacity: 0; } }
+        .timer-pulse { animation: pulse-ring 1s ease-out infinite; }
+    </style>
+</head>
+<body class="bg-gray-900 text-white min-h-screen pb-20">
+    <!-- Header -->
+    <header class="bg-blue-800 p-4 sticky top-0 z-50 shadow-lg">
+        <div class="flex justify-between items-center max-w-lg mx-auto">
+            <h1 class="text-xl font-bold">💪 Workout Tracker</h1>
+            <div class="flex items-center gap-2">
+                <button id="profileToggle" class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-full text-sm font-semibold transition-all flex items-center gap-2">
+                    <span id="profileIcon">👨</span>
+                    <span id="profileName">Father</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main id="mainContent" class="max-w-lg mx-auto p-4">
+        <!-- Views will be rendered here -->
+    </main>
+
+    <!-- Bottom Navigation -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-gray-800 border-t border-gray-700 z-50">
+        <div class="max-w-lg mx-auto flex justify-around py-2">
+            <button onclick="showView('home')" class="nav-btn flex flex-col items-center p-2 text-blue-400" data-view="home">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                <span class="text-xs mt-1">Home</span>
+            </button>
+            <button onclick="showView('timer')" class="nav-btn flex flex-col items-center p-2 text-gray-400" data-view="timer">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <span class="text-xs mt-1">Timer</span>
+            </button>
+            <button onclick="showView('history')" class="nav-btn flex flex-col items-center p-2 text-gray-400" data-view="history">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                <span class="text-xs mt-1">History</span>
+            </button>
+        </div>
+    </nav>
+
+    <script>
+        // ===== WORKOUT SCHEDULE DATA =====
+        const workoutSchedule = [
+            {
+                day: 1,
+                name: "Legs & Push",
+                emoji: "🦵",
+                exercises: [
+                    { name: "Barbell/Band Squats", type: "strength", sets: 3, videoLink: "https://www.youtube.com/results?search_query=goblet+squat+form+shorts" },
+                    { name: "Push-ups", type: "strength", sets: 3, videoLink: "https://www.youtube.com/results?search_query=perfect+push+up+form+shorts" },
+                    { name: "Dot Drills", type: "cardio", duration: 15, work: 45, rest: 15, videoLink: "https://www.youtube.com/results?search_query=dot+drill+agility+shorts" }
+                ]
+            },
+            {
+                day: 2,
+                name: "Hinge & Pull",
+                emoji: "🏋️",
+                exercises: [
+                    { name: "Deadlift / Band Pull-Through", type: "strength", sets: 3, videoLink: "https://www.youtube.com/results?search_query=deadlift+form+shorts" },
+                    { name: "Bent Over Rows", type: "strength", sets: 3, videoLink: "https://www.youtube.com/results?search_query=barbell+row+form+shorts" },
+                    { name: "Shadow Boxing", type: "cardio", duration: 15, work: 60, rest: 60, videoLink: "https://www.youtube.com/results?search_query=shadow+boxing+workout+shorts" }
+                ]
+            },
+            {
+                day: 3,
+                name: "Shoulders & Core",
+                emoji: "💪",
+                exercises: [
+                    { name: "Overhead Press", type: "strength", sets: 3, videoLink: "https://www.youtube.com/results?search_query=overhead+press+form+shorts" },
+                    { name: "Plank High-Fives", type: "strength", sets: 3, isHold: true, holdTime: 45, videoLink: "https://www.youtube.com/results?search_query=plank+partner+high+five+shorts" },
+                    { name: "Jumping Jacks / Seal Jacks", type: "cardio", duration: 15, work: 30, rest: 30, videoLink: "https://www.youtube.com/results?search_query=seal+jacks+exercise+shorts" }
+                ]
+            },
+            {
+                day: 4,
+                name: "Arms & Accessories",
+                emoji: "💪",
+                exercises: [
+                    { name: "Bicep Curls", type: "strength", sets: 3, videoLink: "https://www.youtube.com/results?search_query=bicep+curl+form+shorts" },
+                    { name: "Tricep Extensions", type: "strength", sets: 3, videoLink: "https://www.youtube.com/results?search_query=skullcrusher+tricep+form+shorts" },
+                    { name: "Mountain Climbers", type: "cardio", duration: 15, work: 30, rest: 30, videoLink: "https://www.youtube.com/results?search_query=mountain+climbers+form+shorts" }
+                ]
+            },
+            {
+                day: 5,
+                name: "Deck of Cards Challenge",
+                emoji: "🃏",
+                isCardGame: true,
+                duration: 20,
+                rules: {
+                    hearts: { exercise: "Squats", emoji: "❤️", videoLink: "https://www.youtube.com/results?search_query=goblet+squat+form+shorts" },
+                    diamonds: { exercise: "Push-ups", emoji: "♦️", videoLink: "https://www.youtube.com/results?search_query=perfect+push+up+form+shorts" },
+                    spades: { exercise: "Lunges", emoji: "♠️", videoLink: "https://www.youtube.com/results?search_query=lunge+form+shorts" },
+                    clubs: { exercise: "Sit-ups", emoji: "♣️", videoLink: "https://www.youtube.com/results?search_query=sit+up+form+shorts" }
+                }
+            }
+        ];
+
+        // ===== APP STATE =====
+        let currentUser = localStorage.getItem('currentUser') || 'Father';
+        let currentView = 'home';
+        let timerInterval = null;
+        let timerState = { running: false, timeLeft: 0, isWork: true, workTime: 30, restTime: 30 };
+
+        // ===== LOCAL STORAGE FUNCTIONS =====
+        function getWorkoutData() {
+            const data = localStorage.getItem('workoutData');
+            return data ? JSON.parse(data) : { Father: {}, Son: {} };
+        }
+
+        function saveWorkoutData(data) {
+            localStorage.setItem('workoutData', JSON.stringify(data));
+        }
+
+        function getTodayKey() {
+            return new Date().toISOString().split('T')[0];
+        }
+
+        function getCurrentWorkout() {
+            const data = getWorkoutData();
+            const today = getTodayKey();
+            if (!data[currentUser][today]) {
+                data[currentUser][today] = { exercises: {} };
+            }
+            return data[currentUser][today];
+        }
+
+        function saveExerciseSet(exerciseName, setIndex, weight, reps, completed) {
+            const data = getWorkoutData();
+            const today = getTodayKey();
+            if (!data[currentUser][today]) {
+                data[currentUser][today] = { exercises: {} };
+            }
+            if (!data[currentUser][today].exercises[exerciseName]) {
+                data[currentUser][today].exercises[exerciseName] = [];
+            }
+            data[currentUser][today].exercises[exerciseName][setIndex] = { weight, reps, completed };
+            saveWorkoutData(data);
+        }
+
+        // ===== PROFILE TOGGLE =====
+        document.getElementById('profileToggle').addEventListener('click', () => {
+            currentUser = currentUser === 'Father' ? 'Son' : 'Father';
+            localStorage.setItem('currentUser', currentUser);
+            document.getElementById('profileName').textContent = currentUser;
+            document.getElementById('profileIcon').textContent = currentUser === 'Father' ? '👨' : '👦';
+            showView(currentView);
+        });
+
+        // Initialize profile display
+        document.getElementById('profileName').textContent = currentUser;
+        document.getElementById('profileIcon').textContent = currentUser === 'Father' ? '👨' : '👦';
+
+        // ===== VIEW RENDERING =====
+        function showView(view) {
+            currentView = view;
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.toggle('text-blue-400', btn.dataset.view === view);
+                btn.classList.toggle('text-gray-400', btn.dataset.view !== view);
+            });
+
+            const main = document.getElementById('mainContent');
+            
+            switch(view) {
+                case 'home': renderHomeView(main); break;
+                case 'timer': renderTimerView(main); break;
+                case 'history': renderHistoryView(main); break;
+                case 'workout': renderWorkoutView(main, currentView.dayIndex); break;
+                case 'cardGame': renderCardGameView(main); break;
+            }
+        }
+
+        function renderHomeView(container) {
+            const today = new Date();
+            const dayOfWeek = today.toLocaleDateString('en-US', { weekday: 'long' });
+            
+            container.innerHTML = `
+                <div class="text-center mb-6">
+                    <p class="text-gray-400">Today is ${dayOfWeek}</p>
+                    <h2 class="text-2xl font-bold mt-2">Choose Your Workout</h2>
+                </div>
+                <div class="space-y-4">
+                    ${workoutSchedule.map((day, index) => `
+                        <button onclick="${day.isCardGame ? 'showCardGame()' : `showWorkout(${index})`}" 
+                            class="w-full bg-gradient-to-r ${getGradient(index)} p-5 rounded-2xl text-left shadow-lg hover:scale-[1.02] transition-transform active:scale-[0.98]">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <span class="text-3xl mr-3">${day.emoji}</span>
+                                    <span class="text-xl font-bold">Day ${day.day}</span>
+                                </div>
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                            </div>
+                            <p class="mt-2 text-lg opacity-90">${day.name}</p>
+                            ${day.isCardGame ? '<p class="text-sm opacity-75 mt-1">20 min continuous challenge</p>' : `<p class="text-sm opacity-75 mt-1">${day.exercises.length} exercises</p>`}
+                        </button>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function getGradient(index) {
+            const gradients = [
+                'from-blue-600 to-blue-800',
+                'from-purple-600 to-purple-800',
+                'from-green-600 to-green-800',
+                'from-orange-600 to-orange-800',
+                'from-red-600 to-red-800'
+            ];
+            return gradients[index % gradients.length];
+        }
+
+        function showWorkout(dayIndex) {
+            currentView = { name: 'workout', dayIndex };
+            renderWorkoutView(document.getElementById('mainContent'), dayIndex);
+        }
+
+        function showCardGame() {
+            currentView = 'cardGame';
+            renderCardGameView(document.getElementById('mainContent'));
+        }
+
+        function renderWorkoutView(container, dayIndex) {
+            const day = workoutSchedule[dayIndex];
+            const workoutData = getCurrentWorkout();
+
+            container.innerHTML = `
+                <button onclick="showView('home')" class="flex items-center text-blue-400 mb-4 hover:text-blue-300">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                    Back to Days
+                </button>
+                <div class="text-center mb-6">
+                    <span class="text-4xl">${day.emoji}</span>
+                    <h2 class="text-2xl font-bold mt-2">Day ${day.day}: ${day.name}</h2>
+                </div>
+                <div class="space-y-6">
+                    ${day.exercises.map((ex, exIndex) => renderExerciseCard(ex, exIndex, workoutData)).join('')}
+                </div>
+                <button onclick="completeWorkout(${dayIndex})" class="w-full mt-8 bg-green-600 hover:bg-green-500 text-white font-bold py-4 px-6 rounded-2xl text-lg transition-colors">
+                    ✅ Complete Workout
+                </button>
+            `;
+        }
+
+        function renderExerciseCard(exercise, exIndex, workoutData) {
+            const savedData = workoutData.exercises[exercise.name] || [];
+            
+            if (exercise.type === 'cardio') {
+                return `
+                    <div class="bg-gray-800 rounded-2xl p-5 shadow-lg">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center">
+                                <span class="text-2xl mr-3">🏃</span>
+                                <div>
+                                    <h3 class="font-bold text-lg">${exercise.name}</h3>
+                                    <p class="text-sm text-gray-400">${exercise.duration} mins • ${exercise.work}s work / ${exercise.rest}s rest</p>
+                                </div>
+                            </div>
+                            <a href="${exercise.videoLink}" target="_blank" class="bg-red-600 hover:bg-red-500 p-2 rounded-full">
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"></path></svg>
+                            </a>
+                        </div>
+                        <button onclick="startCardioTimer(${exercise.work}, ${exercise.rest}, ${exercise.duration})" 
+                            class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-xl font-semibold transition-colors">
+                            ⏱️ Start Timer
+                        </button>
+                    </div>
+                `;
+            }
+
+            let setsHtml = '';
+            for (let i = 0; i < exercise.sets; i++) {
+                const setData = savedData[i] || { weight: '', reps: '', completed: false };
+                if (exercise.isHold) {
+                    setsHtml += `
+                        <div class="flex items-center gap-3 py-3 border-b border-gray-700 last:border-0">
+                            <span class="text-gray-400 w-16">Set ${i + 1}</span>
+                            <span class="text-gray-400 flex-1">${exercise.holdTime}s hold</span>
+                            <label class="flex items-center">
+                                <input type="checkbox" ${setData.completed ? 'checked' : ''} 
+                                    onchange="saveSet('${exercise.name}', ${i}, 0, ${exercise.holdTime}, this.checked)"
+                                    class="w-7 h-7 rounded-lg bg-gray-700 border-gray-600 text-green-500 focus:ring-green-500">
+                            </label>
+                        </div>
+                    `;
+                } else {
+                    setsHtml += `
+                        <div class="flex items-center gap-3 py-3 border-b border-gray-700 last:border-0">
+                            <span class="text-gray-400 w-16">Set ${i + 1}</span>
+                            <input type="number" placeholder="lbs" value="${setData.weight || ''}" 
+                                onchange="saveSet('${exercise.name}', ${i}, this.value, this.parentElement.querySelector('[placeholder=reps]').value, this.parentElement.querySelector('[type=checkbox]').checked)"
+                                class="w-20 bg-gray-700 rounded-lg px-3 py-2 text-center focus:ring-2 focus:ring-blue-500 outline-none">
+                            <span class="text-gray-500">×</span>
+                            <input type="number" placeholder="reps" value="${setData.reps || ''}"
+                                onchange="saveSet('${exercise.name}', ${i}, this.parentElement.querySelector('[placeholder=lbs]').value, this.value, this.parentElement.querySelector('[type=checkbox]').checked)"
+                                class="w-20 bg-gray-700 rounded-lg px-3 py-2 text-center focus:ring-2 focus:ring-blue-500 outline-none">
+                            <label class="flex items-center">
+                                <input type="checkbox" ${setData.completed ? 'checked' : ''}
+                                    onchange="saveSet('${exercise.name}', ${i}, this.parentElement.parentElement.querySelector('[placeholder=lbs]').value, this.parentElement.parentElement.querySelector('[placeholder=reps]').value, this.checked)"
+                                    class="w-7 h-7 rounded-lg bg-gray-700 border-gray-600 text-green-500 focus:ring-green-500">
+                            </label>
+                        </div>
+                    `;
+                }
+            }
+
+            return `
+                <div class="bg-gray-800 rounded-2xl p-5 shadow-lg">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center">
+                            <span class="text-2xl mr-3">🏋️</span>
+                            <h3 class="font-bold text-lg">${exercise.name}</h3>
+                        </div>
+                        <a href="${exercise.videoLink}" target="_blank" class="bg-red-600 hover:bg-red-500 p-2 rounded-full">
+                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"></path></svg>
+                        </a>
+                    </div>
+                    ${setsHtml}
+                </div>
+            `;
+        }
+
+        function saveSet(exerciseName, setIndex, weight, reps, completed) {
+            saveExerciseSet(exerciseName, setIndex, weight, reps, completed);
+        }
+
+        function completeWorkout(dayIndex) {
+            const data = getWorkoutData();
+            const today = getTodayKey();
+            if (!data[currentUser][today]) {
+                data[currentUser][today] = { exercises: {} };
+            }
+            data[currentUser][today].dayCompleted = workoutSchedule[dayIndex].day;
+            data[currentUser][today].dayName = workoutSchedule[dayIndex].name;
+            saveWorkoutData(data);
+            
+            alert(`🎉 Great job ${currentUser}! Day ${workoutSchedule[dayIndex].day} completed!`);
+            showView('home');
+        }
+
+        // ===== TIMER VIEW =====
+        function renderTimerView(container) {
+            container.innerHTML = `
+                <div class="text-center">
+                    <h2 class="text-2xl font-bold mb-8">Interval Timer</h2>
+                    
+                    <div class="relative inline-block mb-8">
+                        <div class="w-64 h-64 rounded-full bg-gray-800 flex items-center justify-center relative">
+                            ${timerState.running ? '<div class="absolute inset-0 rounded-full border-4 border-blue-500 timer-pulse"></div>' : ''}
+                            <div>
+                                <div class="text-6xl font-bold" id="timerDisplay">${formatTime(timerState.timeLeft || timerState.workTime)}</div>
+                                <div class="text-xl mt-2 ${timerState.isWork ? 'text-green-400' : 'text-yellow-400'}" id="timerPhase">
+                                    ${timerState.running ? (timerState.isWork ? '💪 WORK!' : '😮‍💨 REST') : 'Ready'}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4 mb-8">
+                        <div class="bg-gray-800 rounded-2xl p-4">
+                            <label class="text-gray-400 text-sm">Work (sec)</label>
+                            <input type="number" id="workTimeInput" value="${timerState.workTime}" 
+                                class="w-full bg-gray-700 rounded-lg px-4 py-3 text-center text-2xl mt-2 focus:ring-2 focus:ring-green-500 outline-none"
+                                onchange="updateTimerSettings()">
+                        </div>
+                        <div class="bg-gray-800 rounded-2xl p-4">
+                            <label class="text-gray-400 text-sm">Rest (sec)</label>
+                            <input type="number" id="restTimeInput" value="${timerState.restTime}"
+                                class="w-full bg-gray-700 rounded-lg px-4 py-3 text-center text-2xl mt-2 focus:ring-2 focus:ring-yellow-500 outline-none"
+                                onchange="updateTimerSettings()">
+                        </div>
+                    </div>
+
+                    <div class="flex gap-4">
+                        <button onclick="toggleTimer()" id="timerToggleBtn"
+                            class="flex-1 ${timerState.running ? 'bg-red-600 hover:bg-red-500' : 'bg-green-600 hover:bg-green-500'} py-4 rounded-2xl font-bold text-xl transition-colors">
+                            ${timerState.running ? '⏸️ Pause' : '▶️ Start'}
+                        </button>
+                        <button onclick="resetTimer()" class="bg-gray-700 hover:bg-gray-600 px-6 py-4 rounded-2xl font-bold text-xl transition-colors">
+                            🔄
+                        </button>
+                    </div>
+
+                    <div class="mt-6 text-gray-400 text-sm">
+                        Quick presets:
+                        <div class="flex gap-2 mt-2 justify-center flex-wrap">
+                            <button onclick="setPreset(30,30)" class="bg-gray-800 px-4 py-2 rounded-lg hover:bg-gray-700">30/30</button>
+                            <button onclick="setPreset(45,15)" class="bg-gray-800 px-4 py-2 rounded-lg hover:bg-gray-700">45/15</button>
+                            <button onclick="setPreset(60,60)" class="bg-gray-800 px-4 py-2 rounded-lg hover:bg-gray-700">60/60</button>
+                            <button onclick="setPreset(20,10)" class="bg-gray-800 px-4 py-2 rounded-lg hover:bg-gray-700">Tabata</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function updateTimerSettings() {
+            timerState.workTime = parseInt(document.getElementById('workTimeInput').value) || 30;
+            timerState.restTime = parseInt(document.getElementById('restTimeInput').value) || 30;
+            if (!timerState.running) {
+                timerState.timeLeft = timerState.workTime;
+                document.getElementById('timerDisplay').textContent = formatTime(timerState.timeLeft);
+            }
+        }
+
+        function toggleTimer() {
+            if (timerState.running) {
+                clearInterval(timerInterval);
+                timerState.running = false;
+            } else {
+                if (timerState.timeLeft === 0) {
+                    timerState.timeLeft = timerState.workTime;
+                    timerState.isWork = true;
+                }
+                timerState.running = true;
+                timerInterval = setInterval(timerTick, 1000);
+            }
+            renderTimerView(document.getElementById('mainContent'));
+        }
+
+        function timerTick() {
+            timerState.timeLeft--;
+            
+            if (timerState.timeLeft <= 0) {
+                // Play beep
+                playBeep();
+                
+                // Switch phase
+                timerState.isWork = !timerState.isWork;
+                timerState.timeLeft = timerState.isWork ? timerState.workTime : timerState.restTime;
+            }
+            
+            const display = document.getElementById('timerDisplay');
+            const phase = document.getElementById('timerPhase');
+            if (display) display.textContent = formatTime(timerState.timeLeft);
+            if (phase) {
+                phase.textContent = timerState.isWork ? '💪 WORK!' : '😮‍💨 REST';
+                phase.className = `text-xl mt-2 ${timerState.isWork ? 'text-green-400' : 'text-yellow-400'}`;
+            }
+        }
+
+        function resetTimer() {
+            clearInterval(timerInterval);
+            timerState.running = false;
+            timerState.isWork = true;
+            timerState.timeLeft = timerState.workTime;
+            renderTimerView(document.getElementById('mainContent'));
+        }
+
+        function setPreset(work, rest) {
+            timerState.workTime = work;
+            timerState.restTime = rest;
+            timerState.timeLeft = work;
+            timerState.isWork = true;
+            timerState.running = false;
+            clearInterval(timerInterval);
+            renderTimerView(document.getElementById('mainContent'));
+        }
+
+        function startCardioTimer(work, rest, duration) {
+            timerState.workTime = work;
+            timerState.restTime = rest;
+            timerState.timeLeft = work;
+            timerState.isWork = true;
+            showView('timer');
+        }
+
+        function playBeep() {
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                oscillator.frequency.value = 800;
+                oscillator.type = 'sine';
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.3);
+            } catch (e) {
+                console.log('Audio not supported');
+            }
+        }
+
+        // ===== HISTORY VIEW =====
+        function renderHistoryView(container) {
+            const data = getWorkoutData();
+            const userData = data[currentUser] || {};
+            const dates = Object.keys(userData).sort().reverse();
+
+            container.innerHTML = `
+                <h2 class="text-2xl font-bold mb-6 text-center">📊 Workout History</h2>
+                <div class="mb-4 text-center text-gray-400">
+                    Showing history for <span class="text-blue-400 font-semibold">${currentUser}</span>
+                </div>
+                ${dates.length === 0 ? `
+                    <div class="text-center py-12 text-gray-500">
+                        <span class="text-6xl">📭</span>
+                        <p class="mt-4">No workouts recorded yet.</p>
+                        <p class="text-sm">Complete a workout to see it here!</p>
+                    </div>
+                ` : `
+                    <div class="space-y-3">
+                        ${dates.map(date => {
+                            const workout = userData[date];
+                            const displayDate = new Date(date + 'T12:00:00').toLocaleDateString('en-US', { 
+                                weekday: 'short', 
+                                month: 'short', 
+                                day: 'numeric' 
+                            });
+                            const exerciseCount = Object.keys(workout.exercises || {}).length;
+                            return `
+                                <div class="bg-gray-800 rounded-xl p-4 flex items-center justify-between">
+                                    <div>
+                                        <div class="font-semibold">${displayDate}</div>
+                                        ${workout.dayCompleted ? `
+                                            <div class="text-sm text-green-400">✅ Day ${workout.dayCompleted}: ${workout.dayName}</div>
+                                        ` : `
+                                            <div class="text-sm text-gray-400">${exerciseCount} exercises logged</div>
+                                        `}
+                                    </div>
+                                    <button onclick="showHistoryDetail('${date}')" class="text-blue-400 hover:text-blue-300">
+                                        View →
+                                    </button>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                `}
+                ${dates.length > 0 ? `
+                    <button onclick="clearHistory()" class="w-full mt-8 bg-red-900 hover:bg-red-800 text-red-300 py-3 rounded-xl transition-colors">
+                        🗑️ Clear All History
+                    </button>
+                ` : ''}
+            `;
+        }
+
+        function showHistoryDetail(date) {
+            const data = getWorkoutData();
+            const workout = data[currentUser][date];
+            const displayDate = new Date(date + 'T12:00:00').toLocaleDateString('en-US', { 
+                weekday: 'long', 
+                month: 'long', 
+                day: 'numeric',
+                year: 'numeric'
+            });
+
+            const container = document.getElementById('mainContent');
+            container.innerHTML = `
+                <button onclick="showView('history')" class="flex items-center text-blue-400 mb-4 hover:text-blue-300">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                    Back to History
+                </button>
+                <h2 class="text-xl font-bold mb-2">${displayDate}</h2>
+                ${workout.dayCompleted ? `<p class="text-green-400 mb-4">Day ${workout.dayCompleted}: ${workout.dayName}</p>` : ''}
+                <div class="space-y-4">
+                    ${Object.entries(workout.exercises || {}).map(([name, sets]) => `
+                        <div class="bg-gray-800 rounded-xl p-4">
+                            <h3 class="font-semibold mb-2">${name}</h3>
+                            <div class="space-y-1 text-sm text-gray-400">
+                                ${sets.map((set, i) => set ? `
+                                    <div class="flex justify-between">
+                                        <span>Set ${i + 1}</span>
+                                        <span>${set.weight ? `${set.weight} lbs × ` : ''}${set.reps} ${set.weight ? 'reps' : 's'} ${set.completed ? '✅' : '⬜'}</span>
+                                    </div>
+                                ` : '').join('')}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function clearHistory() {
+            if (confirm(`Are you sure you want to clear all workout history for ${currentUser}?`)) {
+                const data = getWorkoutData();
+                data[currentUser] = {};
+                saveWorkoutData(data);
+                renderHistoryView(document.getElementById('mainContent'));
+            }
+        }
+
+        // ===== DECK OF CARDS GAME =====
+        let cardDeck = [];
+        let cardGameTimer = null;
+        let cardGameTimeLeft = 20 * 60;
+        let currentCard = null;
+        let cardsDrawn = 0;
+
+        function createDeck() {
+            const suits = ['hearts', 'diamonds', 'spades', 'clubs'];
+            const values = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+            const deck = [];
+            for (const suit of suits) {
+                for (const value of values) {
+                    deck.push({ suit, value });
+                }
+            }
+            // Shuffle
+            for (let i = deck.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [deck[i], deck[j]] = [deck[j], deck[i]];
+            }
+            return deck;
+        }
+
+        function getCardReps(value) {
+            if (value === 'A') return 1;
+            if (['J', 'Q', 'K'].includes(value)) return 10;
+            return parseInt(value);
+        }
+
+        function getSuitColor(suit) {
+            return ['hearts', 'diamonds'].includes(suit) ? 'text-red-500' : 'text-gray-900';
+        }
+
+        function getSuitSymbol(suit) {
+            const symbols = { hearts: '♥', diamonds: '♦', spades: '♠', clubs: '♣' };
+            return symbols[suit];
+        }
+
+        function renderCardGameView(container) {
+            const day5 = workoutSchedule[4];
+            
+            container.innerHTML = `
+                <button onclick="showView('home')" class="flex items-center text-blue-400 mb-4 hover:text-blue-300">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                    Back to Days
+                </button>
+                
+                <div class="text-center mb-6">
+                    <span class="text-4xl">🃏</span>
+                    <h2 class="text-2xl font-bold mt-2">Deck of Cards Challenge</h2>
+                    <p class="text-gray-400 mt-1">20 minutes of random exercises!</p>
+                </div>
+
+                <div class="bg-gray-800 rounded-2xl p-4 mb-6">
+                    <div class="grid grid-cols-2 gap-2 text-sm">
+                        ${Object.entries(day5.rules).map(([suit, data]) => `
+                            <div class="flex items-center gap-2">
+                                <span class="${['hearts', 'diamonds'].includes(suit) ? 'text-red-500' : 'text-white'} text-xl">${data.emoji}</span>
+                                <span>${data.exercise}</span>
+                                <a href="${data.videoLink}" target="_blank" class="text-red-400 text-xs">📹</a>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2 text-center">Face cards = 10 reps</p>
+                </div>
+
+                <div class="text-center mb-6">
+                    <div class="text-4xl font-bold" id="cardGameTimer">${formatTime(cardGameTimeLeft)}</div>
+                    <div class="text-gray-400 mt-1">Cards drawn: <span id="cardsDrawnCount">${cardsDrawn}</span></div>
+                </div>
+
+                <div class="flex justify-center mb-6">
+                    <div class="card-flip w-40 h-56 ${currentCard ? 'flipped' : ''}" id="cardContainer">
+                        <div class="card-inner relative w-full h-full">
+                            <div class="card-front absolute inset-0 bg-gradient-to-br from-blue-600 to-blue-800 rounded-xl flex items-center justify-center shadow-xl border-4 border-white">
+                                <span class="text-4xl">🃏</span>
+                            </div>
+                            <div class="card-back absolute inset-0 bg-white rounded-xl flex flex-col items-center justify-center shadow-xl" id="cardFace">
+                                ${currentCard ? `
+                                    <span class="${getSuitColor(currentCard.suit)} text-6xl">${getSuitSymbol(currentCard.suit)}</span>
+                                    <span class="text-gray-900 text-4xl font-bold mt-2">${currentCard.value}</span>
+                                    <span class="text-gray-600 text-sm mt-2">${getCardReps(currentCard.value)} ${day5.rules[currentCard.suit].exercise}</span>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    ${cardGameTimer ? `
+                        <button onclick="drawCard()" class="w-full bg-blue-600 hover:bg-blue-500 py-4 rounded-2xl font-bold text-xl transition-colors">
+                            🎴 Draw Card
+                        </button>
+                        <button onclick="stopCardGame()" class="w-full bg-red-600 hover:bg-red-500 py-3 rounded-2xl font-semibold transition-colors">
+                            Stop Game
+                        </button>
+                    ` : `
+                        <button onclick="startCardGame()" class="w-full bg-green-600 hover:bg-green-500 py-4 rounded-2xl font-bold text-xl transition-colors">
+                            ▶️ Start Challenge
+                        </button>
+                    `}
+                </div>
+            `;
+        }
+
+        function startCardGame() {
+            cardDeck = createDeck();
+            cardGameTimeLeft = 20 * 60;
+            cardsDrawn = 0;
+            currentCard = null;
+            
+            cardGameTimer = setInterval(() => {
+                cardGameTimeLeft--;
+                const timerEl = document.getElementById('cardGameTimer');
+                if (timerEl) timerEl.textContent = formatTime(cardGameTimeLeft);
+                
+                if (cardGameTimeLeft <= 0) {
+                    stopCardGame();
+                    alert('🎉 Time\'s up! Great workout!');
+                }
+            }, 1000);
+            
+            renderCardGameView(document.getElementById('mainContent'));
+        }
+
+        function drawCard() {
+            if (cardDeck.length === 0) {
+                cardDeck = createDeck();
+            }
+            
+            currentCard = cardDeck.pop();
+            cardsDrawn++;
+            
+            const container = document.getElementById('cardContainer');
+            const cardFace = document.getElementById('cardFace');
+            const day5 = workoutSchedule[4];
+            
+            container.classList.remove('flipped');
+            
+            setTimeout(() => {
+                cardFace.innerHTML = `
+                    <span class="${getSuitColor(currentCard.suit)} text-6xl">${getSuitSymbol(currentCard.suit)}</span>
+                    <span class="text-gray-900 text-4xl font-bold mt-2">${currentCard.value}</span>
+                    <span class="text-gray-600 text-sm mt-2">${getCardReps(currentCard.value)} ${day5.rules[currentCard.suit].exercise}</span>
+                `;
+                container.classList.add('flipped');
+                document.getElementById('cardsDrawnCount').textContent = cardsDrawn;
+                playBeep();
+            }, 100);
+        }
+
+        function stopCardGame() {
+            clearInterval(cardGameTimer);
+            cardGameTimer = null;
+            
+            // Save to history
+            const data = getWorkoutData();
+            const today = getTodayKey();
+            if (!data[currentUser][today]) {
+                data[currentUser][today] = { exercises: {} };
+            }
+            data[currentUser][today].dayCompleted = 5;
+            data[currentUser][today].dayName = 'Deck of Cards Challenge';
+            data[currentUser][today].exercises['Deck of Cards'] = [{ reps: cardsDrawn, completed: true }];
+            saveWorkoutData(data);
+            
+            renderCardGameView(document.getElementById('mainContent'));
+        }
+
+        // ===== SERVICE WORKER REGISTRATION =====
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').catch(() => {
+                console.log('Service worker not available');
+            });
+        }
+
+        // ===== INITIALIZE APP =====
+        showView('home');
+    </script>
+</body>
+</html>

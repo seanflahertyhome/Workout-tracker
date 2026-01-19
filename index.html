@@ -57,12 +57,16 @@
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
                 <span class="text-xs mt-1">History</span>
             </button>
+            <button onclick="showView('settings')" class="nav-btn flex flex-col items-center p-2 text-gray-400" data-view="settings">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                <span class="text-xs mt-1">Settings</span>
+            </button>
         </div>
     </nav>
 
     <script>
         // ===== WORKOUT SCHEDULE DATA =====
-        const workoutSchedule = [
+        const defaultWorkoutSchedule = [
             {
                 day: 1,
                 name: "Legs & Push",
@@ -117,6 +121,13 @@
                 }
             }
         ];
+
+        // Load workout schedule from localStorage or use defaults
+        let workoutSchedule = JSON.parse(localStorage.getItem('workoutSchedule')) || defaultWorkoutSchedule;
+
+        function saveWorkoutSchedule() {
+            localStorage.setItem('workoutSchedule', JSON.stringify(workoutSchedule));
+        }
 
         // ===== APP STATE =====
         let currentUser = localStorage.getItem('currentUser') || 'Father';
@@ -187,6 +198,7 @@
                 case 'home': renderHomeView(main); break;
                 case 'timer': renderTimerView(main); break;
                 case 'history': renderHistoryView(main); break;
+                case 'settings': renderSettingsView(main); break;
                 case 'workout': renderWorkoutView(main, currentView.dayIndex); break;
                 case 'cardGame': renderCardGameView(main); break;
             }
@@ -606,6 +618,332 @@
                 saveWorkoutData(data);
                 renderHistoryView(document.getElementById('mainContent'));
             }
+        }
+
+        // ===== SETTINGS VIEW =====
+        function renderSettingsView(container) {
+            container.innerHTML = `
+                <h2 class="text-2xl font-bold mb-6 text-center">⚙️ Settings</h2>
+                
+                <div class="space-y-4">
+                    <div class="bg-gray-800 rounded-2xl p-5">
+                        <h3 class="text-lg font-semibold mb-4">Workout Schedule</h3>
+                        <p class="text-gray-400 text-sm mb-4">Customize your workout days and exercises</p>
+                        
+                        <div class="space-y-3" id="workoutDaysList">
+                            ${workoutSchedule.map((day, index) => `
+                                <div class="bg-gray-700 rounded-xl p-4 flex items-center justify-between">
+                                    <div class="flex items-center gap-3">
+                                        <span class="text-2xl">${day.emoji}</span>
+                                        <div>
+                                            <div class="font-semibold">Day ${day.day}: ${day.name}</div>
+                                            <div class="text-sm text-gray-400">
+                                                ${day.isCardGame ? 'Card game challenge' : `${day.exercises.length} exercises`}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="flex gap-2">
+                                        <button onclick="editDay(${index})" class="bg-blue-600 hover:bg-blue-500 px-3 py-2 rounded-lg text-sm font-semibold transition-colors">
+                                            Edit
+                                        </button>
+                                        <button onclick="deleteDay(${index})" class="bg-red-600 hover:bg-red-500 px-3 py-2 rounded-lg text-sm font-semibold transition-colors">
+                                            Delete
+                                        </button>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                        
+                        <button onclick="addNewDay()" class="w-full mt-4 bg-green-600 hover:bg-green-500 py-3 rounded-xl font-semibold transition-colors">
+                            ➕ Add New Day
+                        </button>
+                    </div>
+                    
+                    <div class="bg-gray-800 rounded-2xl p-5">
+                        <h3 class="text-lg font-semibold mb-4">Data Management</h3>
+                        <div class="space-y-3">
+                            <button onclick="resetToDefaults()" class="w-full bg-yellow-600 hover:bg-yellow-500 py-3 rounded-xl font-semibold transition-colors">
+                                🔄 Reset to Default Schedule
+                            </button>
+                            <button onclick="exportData()" class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-xl font-semibold transition-colors">
+                                📤 Export All Data
+                            </button>
+                            <button onclick="importData()" class="w-full bg-purple-600 hover:bg-purple-500 py-3 rounded-xl font-semibold transition-colors">
+                                📥 Import Data
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function editDay(dayIndex) {
+            const day = workoutSchedule[dayIndex];
+            const container = document.getElementById('mainContent');
+            
+            container.innerHTML = `
+                <button onclick="showView('settings')" class="flex items-center text-blue-400 mb-4 hover:text-blue-300">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                    Back to Settings
+                </button>
+                
+                <h2 class="text-2xl font-bold mb-6 text-center">Edit Day ${day.day}</h2>
+                
+                <div class="space-y-4">
+                    <div class="bg-gray-800 rounded-2xl p-5">
+                        <label class="block text-sm font-semibold mb-2">Day Name</label>
+                        <input type="text" id="editDayName" value="${day.name}" class="w-full bg-gray-700 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                    
+                    <div class="bg-gray-800 rounded-2xl p-5">
+                        <label class="block text-sm font-semibold mb-2">Emoji</label>
+                        <input type="text" id="editDayEmoji" value="${day.emoji}" class="w-full bg-gray-700 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none" maxlength="2">
+                    </div>
+                    
+                    ${day.isCardGame ? renderCardGameEditor(day) : renderExerciseEditor(day)}
+                    
+                    <button onclick="saveDayEdits(${dayIndex})" class="w-full bg-green-600 hover:bg-green-500 py-4 rounded-2xl font-bold text-lg transition-colors">
+                        💾 Save Changes
+                    </button>
+                </div>
+            `;
+        }
+
+        function renderExerciseEditor(day) {
+            return `
+                <div class="bg-gray-800 rounded-2xl p-5">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-semibold">Exercises</h3>
+                        <button onclick="addExerciseToCurrentDay()" class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-lg text-sm font-semibold transition-colors">
+                            ➕ Add Exercise
+                        </button>
+                    </div>
+                    
+                    <div class="space-y-3" id="exerciseList">
+                        ${day.exercises.map((ex, exIndex) => `
+                            <div class="bg-gray-700 rounded-xl p-4 exercise-item">
+                                <div class="flex justify-between items-start mb-3">
+                                    <div class="flex-1">
+                                        <input type="text" value="${ex.name}" class="exercise-name w-full bg-gray-600 rounded-lg px-3 py-2 mb-2 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Exercise name">
+                                        <div class="grid grid-cols-2 gap-2">
+                                            <select class="exercise-type bg-gray-600 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none">
+                                                <option value="strength" ${ex.type === 'strength' ? 'selected' : ''}>Strength</option>
+                                                <option value="cardio" ${ex.type === 'cardio' ? 'selected' : ''}>Cardio</option>
+                                            </select>
+                                            <div class="exercise-params">
+                                                ${ex.type === 'strength' ? `
+                                                    <input type="number" value="${ex.sets || 3}" class="exercise-sets w-full bg-gray-600 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Sets">
+                                                ` : `
+                                                    <div class="grid grid-cols-3 gap-1">
+                                                        <input type="number" value="${ex.duration || 15}" class="exercise-duration bg-gray-600 rounded-lg px-2 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Min">
+                                                        <input type="number" value="${ex.work || 30}" class="exercise-work bg-gray-600 rounded-lg px-2 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Work">
+                                                        <input type="number" value="${ex.rest || 30}" class="exercise-rest bg-gray-600 rounded-lg px-2 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Rest">
+                                                    </div>
+                                                `}
+                                            </div>
+                                        </div>
+                                        <input type="url" value="${ex.videoLink || ''}" class="exercise-video w-full bg-gray-600 rounded-lg px-3 py-2 mt-2 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Video link (optional)">
+                                    </div>
+                                    <button onclick="removeExerciseFromCurrentDay(this)" class="bg-red-600 hover:bg-red-500 p-2 rounded-lg ml-2">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                    </button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderCardGameEditor(day) {
+            return `
+                <div class="bg-gray-800 rounded-2xl p-5">
+                    <h3 class="text-lg font-semibold mb-4">Card Game Rules</h3>
+                    <div class="space-y-3">
+                        ${Object.entries(day.rules).map(([suit, data]) => `
+                            <div class="bg-gray-700 rounded-xl p-4">
+                                <div class="flex items-center gap-3 mb-2">
+                                    <span class="text-xl">${data.emoji}</span>
+                                    <span class="font-semibold capitalize">${suit}</span>
+                                </div>
+                                <input type="text" value="${data.exercise}" class="w-full bg-gray-600 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Exercise name">
+                                <input type="url" value="${data.videoLink || ''}" class="w-full bg-gray-600 rounded-lg px-3 py-2 mt-2 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Video link (optional)">
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function addNewDay() {
+            const newDayNum = workoutSchedule.length + 1;
+            const newDay = {
+                day: newDayNum,
+                name: `New Workout Day ${newDayNum}`,
+                emoji: "💪",
+                exercises: [
+                    { name: "New Exercise", type: "strength", sets: 3, videoLink: "" }
+                ]
+            };
+            workoutSchedule.push(newDay);
+            saveWorkoutSchedule();
+            renderSettingsView(document.getElementById('mainContent'));
+        }
+
+        function deleteDay(dayIndex) {
+            if (confirm(`Are you sure you want to delete Day ${workoutSchedule[dayIndex].day}?`)) {
+                workoutSchedule.splice(dayIndex, 1);
+                // Renumber days
+                workoutSchedule.forEach((day, index) => {
+                    day.day = index + 1;
+                });
+                saveWorkoutSchedule();
+                renderSettingsView(document.getElementById('mainContent'));
+            }
+        }
+
+        function saveDayEdits(dayIndex) {
+            const day = workoutSchedule[dayIndex];
+            day.name = document.getElementById('editDayName').value;
+            day.emoji = document.getElementById('editDayEmoji').value;
+            
+            if (day.isCardGame) {
+                // Save card game rules
+                const ruleElements = document.querySelectorAll('#exerciseList input');
+                let ruleIndex = 0;
+                Object.keys(day.rules).forEach(suit => {
+                    day.rules[suit].exercise = ruleElements[ruleIndex++].value;
+                    day.rules[suit].videoLink = ruleElements[ruleIndex++].value;
+                });
+            } else {
+                // Save exercises
+                const exerciseItems = document.querySelectorAll('.exercise-item');
+                day.exercises = Array.from(exerciseItems).map(item => {
+                    const name = item.querySelector('.exercise-name').value;
+                    const type = item.querySelector('.exercise-type').value;
+                    const videoLink = item.querySelector('.exercise-video').value;
+                    
+                    if (type === 'strength') {
+                        const sets = parseInt(item.querySelector('.exercise-sets').value) || 3;
+                        return { name, type, sets, videoLink };
+                    } else {
+                        const duration = parseInt(item.querySelector('.exercise-duration').value) || 15;
+                        const work = parseInt(item.querySelector('.exercise-work').value) || 30;
+                        const rest = parseInt(item.querySelector('.exercise-rest').value) || 30;
+                        return { name, type, duration, work, rest, videoLink };
+                    }
+                });
+            }
+            
+            saveWorkoutSchedule();
+            showView('settings');
+        }
+
+        function addExerciseToCurrentDay() {
+            const exerciseList = document.getElementById('exerciseList');
+            const newExercise = document.createElement('div');
+            newExercise.className = 'bg-gray-700 rounded-xl p-4 exercise-item';
+            newExercise.innerHTML = `
+                <div class="flex justify-between items-start mb-3">
+                    <div class="flex-1">
+                        <input type="text" value="New Exercise" class="exercise-name w-full bg-gray-600 rounded-lg px-3 py-2 mb-2 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Exercise name">
+                        <div class="grid grid-cols-2 gap-2">
+                            <select class="exercise-type bg-gray-600 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none" onchange="updateExerciseParams(this)">
+                                <option value="strength" selected>Strength</option>
+                                <option value="cardio">Cardio</option>
+                            </select>
+                            <div class="exercise-params">
+                                <input type="number" value="3" class="exercise-sets w-full bg-gray-600 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Sets">
+                            </div>
+                        </div>
+                        <input type="url" value="" class="exercise-video w-full bg-gray-600 rounded-lg px-3 py-2 mt-2 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Video link (optional)">
+                    </div>
+                    <button onclick="removeExerciseFromCurrentDay(this)" class="bg-red-600 hover:bg-red-500 p-2 rounded-lg ml-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    </button>
+                </div>
+            `;
+            exerciseList.appendChild(newExercise);
+        }
+
+        function removeExerciseFromCurrentDay(button) {
+            button.closest('.exercise-item').remove();
+        }
+
+        function updateExerciseParams(selectElement) {
+            const paramsContainer = selectElement.parentElement.nextElementSibling;
+            const type = selectElement.value;
+            
+            if (type === 'strength') {
+                paramsContainer.innerHTML = `
+                    <input type="number" value="3" class="exercise-sets w-full bg-gray-600 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Sets">
+                `;
+            } else {
+                paramsContainer.innerHTML = `
+                    <div class="grid grid-cols-3 gap-1">
+                        <input type="number" value="15" class="exercise-duration bg-gray-600 rounded-lg px-2 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Min">
+                        <input type="number" value="30" class="exercise-work bg-gray-600 rounded-lg px-2 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Work">
+                        <input type="number" value="30" class="exercise-rest bg-gray-600 rounded-lg px-2 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Rest">
+                    </div>
+                `;
+            }
+        }
+
+        function resetToDefaults() {
+            if (confirm('Are you sure you want to reset to the default workout schedule? This will overwrite your current schedule.')) {
+                workoutSchedule = JSON.parse(JSON.stringify(defaultWorkoutSchedule));
+                saveWorkoutSchedule();
+                renderSettingsView(document.getElementById('mainContent'));
+            }
+        }
+
+        function exportData() {
+            const data = {
+                workoutSchedule: workoutSchedule,
+                workoutData: getWorkoutData(),
+                currentUser: currentUser
+            };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'workout-tracker-data.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function importData() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        try {
+                            const data = JSON.parse(e.target.result);
+                            if (data.workoutSchedule) {
+                                workoutSchedule = data.workoutSchedule;
+                                saveWorkoutSchedule();
+                            }
+                            if (data.workoutData) {
+                                localStorage.setItem('workoutData', JSON.stringify(data.workoutData));
+                            }
+                            if (data.currentUser) {
+                                currentUser = data.currentUser;
+                                localStorage.setItem('currentUser', currentUser);
+                            }
+                            alert('Data imported successfully!');
+                            showView('home');
+                        } catch (error) {
+                            alert('Error importing data: ' + error.message);
+                        }
+                    };
+                    reader.readAsText(file);
+                }
+            };
+            input.click();
         }
 
         // ===== DECK OF CARDS GAME =====

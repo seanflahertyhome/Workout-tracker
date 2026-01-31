@@ -21,6 +21,9 @@
         .card-back { transform: rotateY(180deg); }
         @keyframes pulse-ring { 0% { transform: scale(0.8); opacity: 1; } 100% { transform: scale(1.3); opacity: 0; } }
         .timer-pulse { animation: pulse-ring 1s ease-out infinite; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .slide-in { animation: slideIn 0.3s ease-out; }
+        .notification-badge { position: absolute; top: -5px; right: -5px; min-width: 18px; height: 18px; }
     </style>
 </head>
 <body class="bg-gray-900 text-white min-h-screen pb-20">
@@ -29,6 +32,10 @@
         <div class="flex justify-between items-center max-w-lg mx-auto">
             <h1 class="text-xl font-bold">💪 Workout Tracker</h1>
             <div class="flex items-center gap-2">
+                <button id="shareNotification" onclick="showView('shared')" class="relative bg-blue-700 hover:bg-blue-600 p-2 rounded-full transition-all">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                    <span id="unreadBadge" class="notification-badge bg-red-500 text-xs rounded-full flex items-center justify-center font-bold hidden">0</span>
+                </button>
                 <button id="profileToggle" class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-full text-sm font-semibold transition-all flex items-center gap-2">
                     <span id="profileIcon">👨</span>
                     <span id="profileName">Father</span>
@@ -36,6 +43,11 @@
             </div>
         </div>
     </header>
+
+    <!-- Connection Status -->
+    <div id="connectionStatus" class="hidden bg-yellow-600 text-center py-1 text-sm">
+        ⚠️ Offline mode - changes saved locally
+    </div>
 
     <!-- Main Content -->
     <main id="mainContent" class="max-w-lg mx-auto p-4">
@@ -57,6 +69,10 @@
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
                 <span class="text-xs mt-1">History</span>
             </button>
+            <button onclick="showView('stats')" class="nav-btn flex flex-col items-center p-2 text-gray-400" data-view="stats">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                <span class="text-xs mt-1">Stats</span>
+            </button>
             <button onclick="showView('settings')" class="nav-btn flex flex-col items-center p-2 text-gray-400" data-view="settings">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                 <span class="text-xs mt-1">Settings</span>
@@ -65,6 +81,10 @@
     </nav>
 
     <script>
+        // ===== API CONFIGURATION =====
+        const API_BASE = window.location.origin + '/api';
+        let isOnline = navigator.onLine;
+
         // ===== WORKOUT SCHEDULE DATA =====
         const defaultWorkoutSchedule = [
             {
@@ -144,6 +164,14 @@
 
         function saveWorkoutSchedule() {
             localStorage.setItem('workoutSchedule', JSON.stringify(workoutSchedule));
+            // Also save to database if online
+            if (isOnline) {
+                fetch(`${API_BASE}/schedule/${currentUser}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ schedule: workoutSchedule })
+                }).catch(console.error);
+            }
         }
 
         // ===== APP STATE =====
@@ -151,14 +179,56 @@
         let currentView = 'home';
         let timerInterval = null;
         let timerState = { running: false, timeLeft: 0, isWork: true, workTime: 30, restTime: 30 };
+        let cachedWorkouts = {};
 
-        // ===== LOCAL STORAGE FUNCTIONS =====
-        function getWorkoutData() {
+        // ===== API FUNCTIONS =====
+        async function apiRequest(endpoint, options = {}) {
+            try {
+                const response = await fetch(`${API_BASE}${endpoint}`, {
+                    ...options,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...options.headers
+                    }
+                });
+                if (!response.ok) throw new Error(`API error: ${response.status}`);
+                return await response.json();
+            } catch (error) {
+                console.error('API request failed:', error);
+                isOnline = false;
+                updateConnectionStatus();
+                throw error;
+            }
+        }
+
+        function updateConnectionStatus() {
+            const statusEl = document.getElementById('connectionStatus');
+            if (!isOnline) {
+                statusEl.classList.remove('hidden');
+            } else {
+                statusEl.classList.add('hidden');
+            }
+        }
+
+        // Check connection status
+        window.addEventListener('online', () => {
+            isOnline = true;
+            updateConnectionStatus();
+            syncLocalData();
+        });
+
+        window.addEventListener('offline', () => {
+            isOnline = false;
+            updateConnectionStatus();
+        });
+
+        // ===== LOCAL STORAGE FUNCTIONS (FALLBACK) =====
+        function getLocalWorkoutData() {
             const data = localStorage.getItem('workoutData');
             return data ? JSON.parse(data) : { Father: {}, Son: {} };
         }
 
-        function saveWorkoutData(data) {
+        function saveLocalWorkoutData(data) {
             localStorage.setItem('workoutData', JSON.stringify(data));
         }
 
@@ -166,18 +236,87 @@
             return new Date().toISOString().split('T')[0];
         }
 
-        function getCurrentWorkout() {
-            const data = getWorkoutData();
-            const today = getTodayKey();
-            if (!data[currentUser][today]) {
-                data[currentUser][today] = { exercises: {} };
+        // ===== DATA SYNC =====
+        async function syncLocalData() {
+            // Sync any locally stored data to the server when back online
+            const localData = getLocalWorkoutData();
+            for (const user of ['Father', 'Son']) {
+                for (const [date, workout] of Object.entries(localData[user] || {})) {
+                    if (workout.needsSync) {
+                        try {
+                            if (workout.dayCompleted) {
+                                await apiRequest('/workouts/complete', {
+                                    method: 'POST',
+                                    body: JSON.stringify({
+                                        userName: user,
+                                        date,
+                                        dayCompleted: workout.dayCompleted,
+                                        dayName: workout.dayName,
+                                        dayOfWeek: workout.dayOfWeek
+                                    })
+                                });
+                            }
+                            for (const [exName, sets] of Object.entries(workout.exercises || {})) {
+                                for (let i = 0; i < sets.length; i++) {
+                                    if (sets[i]) {
+                                        await apiRequest('/workouts/exercise', {
+                                            method: 'POST',
+                                            body: JSON.stringify({
+                                                userName: user,
+                                                date,
+                                                exerciseName: exName,
+                                                setIndex: i,
+                                                weight: sets[i].weight,
+                                                reps: sets[i].reps,
+                                                completed: sets[i].completed
+                                            })
+                                        });
+                                    }
+                                }
+                            }
+                            delete localData[user][date].needsSync;
+                            saveLocalWorkoutData(localData);
+                        } catch (e) {
+                            console.error('Sync failed:', e);
+                        }
+                    }
+                }
             }
-            return data[currentUser][today];
         }
 
-        function saveExerciseSet(exerciseName, setIndex, weight, reps, completed) {
-            const data = getWorkoutData();
+        // ===== WORKOUT DATA FUNCTIONS =====
+        async function getWorkoutData() {
+            if (isOnline) {
+                try {
+                    const data = await apiRequest(`/workouts/${currentUser}`);
+                    cachedWorkouts[currentUser] = data;
+                    return { [currentUser]: data };
+                } catch (e) {
+                    return getLocalWorkoutData();
+                }
+            }
+            return getLocalWorkoutData();
+        }
+
+        async function getCurrentWorkout() {
             const today = getTodayKey();
+            if (isOnline) {
+                try {
+                    return await apiRequest(`/workouts/${currentUser}/${today}`);
+                } catch (e) {
+                    const local = getLocalWorkoutData();
+                    return local[currentUser]?.[today] || { exercises: {} };
+                }
+            }
+            const local = getLocalWorkoutData();
+            return local[currentUser]?.[today] || { exercises: {} };
+        }
+
+        async function saveExerciseSet(exerciseName, setIndex, weight, reps, completed) {
+            const today = getTodayKey();
+            
+            // Save locally first
+            const data = getLocalWorkoutData();
             if (!data[currentUser][today]) {
                 data[currentUser][today] = { exercises: {} };
             }
@@ -185,7 +324,46 @@
                 data[currentUser][today].exercises[exerciseName] = [];
             }
             data[currentUser][today].exercises[exerciseName][setIndex] = { weight, reps, completed };
-            saveWorkoutData(data);
+            
+            if (isOnline) {
+                try {
+                    await apiRequest('/workouts/exercise', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            userName: currentUser,
+                            date: today,
+                            exerciseName,
+                            setIndex,
+                            weight: weight || 0,
+                            reps: reps || 0,
+                            completed
+                        })
+                    });
+                } catch (e) {
+                    data[currentUser][today].needsSync = true;
+                }
+            } else {
+                data[currentUser][today].needsSync = true;
+            }
+            
+            saveLocalWorkoutData(data);
+        }
+
+        // ===== NOTIFICATION FUNCTIONS =====
+        async function checkUnreadNotifications() {
+            if (!isOnline) return;
+            try {
+                const result = await apiRequest(`/share/${currentUser}/unread`);
+                const badge = document.getElementById('unreadBadge');
+                if (result.count > 0) {
+                    badge.textContent = result.count;
+                    badge.classList.remove('hidden');
+                } else {
+                    badge.classList.add('hidden');
+                }
+            } catch (e) {
+                console.error('Failed to check notifications:', e);
+            }
         }
 
         // ===== PROFILE TOGGLE =====
@@ -194,6 +372,7 @@
             localStorage.setItem('currentUser', currentUser);
             document.getElementById('profileName').textContent = currentUser;
             document.getElementById('profileIcon').textContent = currentUser === 'Father' ? '👨' : '👦';
+            checkUnreadNotifications();
             showView(currentView);
         });
 
@@ -215,15 +394,17 @@
                 case 'home': renderHomeView(main); break;
                 case 'timer': renderTimerView(main); break;
                 case 'history': renderHistoryView(main); break;
+                case 'stats': renderStatsView(main); break;
                 case 'settings': renderSettingsView(main); break;
+                case 'shared': renderSharedView(main); break;
                 case 'workout': renderWorkoutView(main, currentView.dayIndex); break;
                 case 'cardGame': renderCardGameView(main); break;
             }
         }
 
         function getTodayWorkoutIndex() {
-            const today = new Date().getDay(); // 0=Sunday, 1=Monday, etc.
-            const dayMap = { 1: 0, 2: 1, 3: 2, 4: 3, 5: 4 }; // Mon-Fri mapped to array indices
+            const today = new Date().getDay();
+            const dayMap = { 1: 0, 2: 1, 3: 2, 4: 3, 5: 4 };
             return dayMap[today] !== undefined ? dayMap[today] : -1;
         }
 
@@ -261,9 +442,7 @@
         }
 
         function getGradient(index, day) {
-            if (day.isRecovery) {
-                return 'from-teal-600 to-teal-800';
-            }
+            if (day.isRecovery) return 'from-teal-600 to-teal-800';
             const gradients = [
                 'from-blue-600 to-blue-800',
                 'from-teal-600 to-teal-800',
@@ -284,9 +463,9 @@
             renderCardGameView(document.getElementById('mainContent'));
         }
 
-        function renderWorkoutView(container, dayIndex) {
+        async function renderWorkoutView(container, dayIndex) {
             const day = workoutSchedule[dayIndex];
-            const workoutData = getCurrentWorkout();
+            const workoutData = await getCurrentWorkout();
 
             container.innerHTML = `
                 <button onclick="showView('home')" class="flex items-center text-blue-400 mb-4 hover:text-blue-300">
@@ -308,9 +487,8 @@
         }
 
         function renderExerciseCard(exercise, exIndex, workoutData, isRecovery) {
-            const savedData = workoutData.exercises[exercise.name] || [];
+            const savedData = workoutData.exercises?.[exercise.name] || [];
             
-            // Recovery/Walking type
             if (exercise.type === 'recovery') {
                 return `
                     <div class="bg-gray-800 rounded-2xl p-5 shadow-lg border-l-4 border-teal-500">
@@ -322,9 +500,14 @@
                                     <p class="text-sm text-gray-400">${exercise.description || exercise.duration + ' minutes'}</p>
                                 </div>
                             </div>
-                            <a href="${exercise.videoLink}" target="_blank" class="bg-red-600 hover:bg-red-500 p-2 rounded-full">
-                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"></path></svg>
-                            </a>
+                            <div class="flex items-center gap-2">
+                                <button onclick="shareExercise('${exercise.name}', ${exercise.duration})" class="bg-purple-600 hover:bg-purple-500 p-2 rounded-full" title="Share with ${currentUser === 'Father' ? 'Son' : 'Father'}">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
+                                </button>
+                                <a href="${exercise.videoLink}" target="_blank" class="bg-red-600 hover:bg-red-500 p-2 rounded-full">
+                                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"></path></svg>
+                                </a>
+                            </div>
                         </div>
                         <div class="flex items-center justify-between py-3">
                             <span class="text-gray-400">${exercise.duration} minutes</span>
@@ -338,7 +521,6 @@
                 `;
             }
             
-            // Stretch type
             if (exercise.type === 'stretch') {
                 const setsHtml = [];
                 for (let i = 0; i < exercise.sets; i++) {
@@ -363,9 +545,14 @@
                                 <span class="text-2xl mr-3">🧘</span>
                                 <h3 class="font-bold text-lg">${exercise.name}</h3>
                             </div>
-                            <a href="${exercise.videoLink}" target="_blank" class="bg-red-600 hover:bg-red-500 p-2 rounded-full">
-                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"></path></svg>
-                            </a>
+                            <div class="flex items-center gap-2">
+                                <button onclick="shareExercise('${exercise.name}', ${exercise.holdTime * exercise.sets})" class="bg-purple-600 hover:bg-purple-500 p-2 rounded-full" title="Share">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
+                                </button>
+                                <a href="${exercise.videoLink}" target="_blank" class="bg-red-600 hover:bg-red-500 p-2 rounded-full">
+                                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"></path></svg>
+                                </a>
+                            </div>
                         </div>
                         ${setsHtml.join('')}
                     </div>
@@ -383,9 +570,14 @@
                                     <p class="text-sm text-gray-400">${exercise.duration} mins • ${exercise.work}s work / ${exercise.rest}s rest</p>
                                 </div>
                             </div>
-                            <a href="${exercise.videoLink}" target="_blank" class="bg-red-600 hover:bg-red-500 p-2 rounded-full">
-                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"></path></svg>
-                            </a>
+                            <div class="flex items-center gap-2">
+                                <button onclick="shareExercise('${exercise.name}', ${exercise.duration * 60})" class="bg-purple-600 hover:bg-purple-500 p-2 rounded-full" title="Share">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
+                                </button>
+                                <a href="${exercise.videoLink}" target="_blank" class="bg-red-600 hover:bg-red-500 p-2 rounded-full">
+                                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"></path></svg>
+                                </a>
+                            </div>
                         </div>
                         <button onclick="startCardioTimer(${exercise.work}, ${exercise.rest}, ${exercise.duration})" 
                             class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-xl font-semibold transition-colors">
@@ -435,9 +627,14 @@
                             <span class="text-2xl mr-3">🏋️</span>
                             <h3 class="font-bold text-lg">${exercise.name}</h3>
                         </div>
-                        <a href="${exercise.videoLink}" target="_blank" class="bg-red-600 hover:bg-red-500 p-2 rounded-full">
-                            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"></path></svg>
-                        </a>
+                        <div class="flex items-center gap-2">
+                            <button onclick="shareExercise('${exercise.name}', ${exercise.sets * 10})" class="bg-purple-600 hover:bg-purple-500 p-2 rounded-full" title="Share with ${currentUser === 'Father' ? 'Son' : 'Father'}">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path></svg>
+                            </button>
+                            <a href="${exercise.videoLink}" target="_blank" class="bg-red-600 hover:bg-red-500 p-2 rounded-full">
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"></path></svg>
+                            </a>
+                        </div>
                     </div>
                     ${setsHtml}
                 </div>
@@ -448,20 +645,226 @@
             saveExerciseSet(exerciseName, setIndex, weight, reps, completed);
         }
 
-        function completeWorkout(dayIndex) {
-            const data = getWorkoutData();
+        async function completeWorkout(dayIndex) {
             const today = getTodayKey();
+            const day = workoutSchedule[dayIndex];
+            
+            // Save locally
+            const data = getLocalWorkoutData();
             if (!data[currentUser][today]) {
                 data[currentUser][today] = { exercises: {} };
             }
-            data[currentUser][today].dayCompleted = workoutSchedule[dayIndex].day;
-            data[currentUser][today].dayName = workoutSchedule[dayIndex].name;
-            data[currentUser][today].dayOfWeek = workoutSchedule[dayIndex].dayOfWeek;
-            saveWorkoutData(data);
+            data[currentUser][today].dayCompleted = day.day;
+            data[currentUser][today].dayName = day.name;
+            data[currentUser][today].dayOfWeek = day.dayOfWeek;
             
-            const isRecovery = workoutSchedule[dayIndex].isRecovery;
-            alert(`🎉 Great job ${currentUser}! ${workoutSchedule[dayIndex].dayOfWeek}'s ${isRecovery ? 'recovery' : 'workout'} completed!`);
+            if (isOnline) {
+                try {
+                    await apiRequest('/workouts/complete', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            userName: currentUser,
+                            date: today,
+                            dayCompleted: day.day,
+                            dayName: day.name,
+                            dayOfWeek: day.dayOfWeek
+                        })
+                    });
+                } catch (e) {
+                    data[currentUser][today].needsSync = true;
+                }
+            } else {
+                data[currentUser][today].needsSync = true;
+            }
+            
+            saveLocalWorkoutData(data);
+            
+            alert(`🎉 Great job ${currentUser}! ${day.dayOfWeek}'s ${day.isRecovery ? 'recovery' : 'workout'} completed!`);
             showView('home');
+        }
+
+        // ===== SHARING FUNCTIONS =====
+        async function shareExercise(exerciseName, reps) {
+            const otherUser = currentUser === 'Father' ? 'Son' : 'Father';
+            const message = prompt(`Share "${exerciseName}" with ${otherUser}. Add a message (optional):`);
+            
+            if (message === null) return; // Cancelled
+            
+            if (isOnline) {
+                try {
+                    await apiRequest('/share', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            fromUserName: currentUser,
+                            toUserName: otherUser,
+                            exerciseName,
+                            reps,
+                            message: message || `Check out this exercise!`,
+                            workoutDate: getTodayKey()
+                        })
+                    });
+                    alert(`✅ Shared "${exerciseName}" with ${otherUser}!`);
+                } catch (e) {
+                    alert('❌ Failed to share. Please try again.');
+                }
+            } else {
+                alert('❌ You need to be online to share exercises.');
+            }
+        }
+
+        async function renderSharedView(container) {
+            container.innerHTML = `
+                <h2 class="text-2xl font-bold mb-6 text-center">📬 Shared Exercises</h2>
+                <div class="text-center mb-4 text-gray-400">
+                    Exercises shared with <span class="text-blue-400 font-semibold">${currentUser}</span>
+                </div>
+                <div id="sharedList" class="space-y-3">
+                    <div class="text-center py-8 text-gray-500">Loading...</div>
+                </div>
+            `;
+
+            if (!isOnline) {
+                document.getElementById('sharedList').innerHTML = `
+                    <div class="text-center py-8 text-gray-500">
+                        <span class="text-4xl">📴</span>
+                        <p class="mt-4">You're offline. Connect to see shared exercises.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            try {
+                const shares = await apiRequest(`/share/${currentUser}`);
+                
+                if (shares.length === 0) {
+                    document.getElementById('sharedList').innerHTML = `
+                        <div class="text-center py-12 text-gray-500">
+                            <span class="text-6xl">📭</span>
+                            <p class="mt-4">No shared exercises yet.</p>
+                            <p class="text-sm">When ${currentUser === 'Father' ? 'Son' : 'Father'} shares an exercise, it'll show up here!</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                document.getElementById('sharedList').innerHTML = shares.map(share => `
+                    <div class="bg-gray-800 rounded-xl p-4 slide-in ${share.is_read ? 'opacity-75' : 'border-l-4 border-blue-500'}">
+                        <div class="flex items-start justify-between">
+                            <div class="flex items-center gap-3">
+                                <span class="text-2xl">${share.from_icon}</span>
+                                <div>
+                                    <div class="font-semibold">${share.from_user} shared:</div>
+                                    <div class="text-blue-400">${share.exercise_name}</div>
+                                    ${share.message ? `<div class="text-sm text-gray-400 mt-1">"${share.message}"</div>` : ''}
+                                </div>
+                            </div>
+                            <div class="text-xs text-gray-500">
+                                ${new Date(share.created_at).toLocaleDateString()}
+                            </div>
+                        </div>
+                        ${!share.is_read ? `
+                            <button onclick="markAsRead(${share.id}, this)" class="mt-3 text-sm text-blue-400 hover:text-blue-300">
+                                Mark as read
+                            </button>
+                        ` : ''}
+                    </div>
+                `).join('');
+
+            } catch (e) {
+                document.getElementById('sharedList').innerHTML = `
+                    <div class="text-center py-8 text-red-400">
+                        <p>Failed to load shared exercises.</p>
+                        <button onclick="renderSharedView(document.getElementById('mainContent'))" class="mt-2 text-blue-400">Try again</button>
+                    </div>
+                `;
+            }
+        }
+
+        async function markAsRead(shareId, button) {
+            try {
+                await apiRequest(`/share/${shareId}/read`, { method: 'PATCH' });
+                button.closest('.bg-gray-800').classList.remove('border-l-4', 'border-blue-500');
+                button.closest('.bg-gray-800').classList.add('opacity-75');
+                button.remove();
+                checkUnreadNotifications();
+            } catch (e) {
+                console.error('Failed to mark as read:', e);
+            }
+        }
+
+        // ===== STATS VIEW =====
+        async function renderStatsView(container) {
+            container.innerHTML = `
+                <h2 class="text-2xl font-bold mb-6 text-center">📊 Stats & Leaderboard</h2>
+                <div id="statsContent">
+                    <div class="text-center py-8 text-gray-500">Loading stats...</div>
+                </div>
+            `;
+
+            if (!isOnline) {
+                document.getElementById('statsContent').innerHTML = `
+                    <div class="text-center py-8 text-gray-500">
+                        <span class="text-4xl">📴</span>
+                        <p class="mt-4">Connect to the internet to view stats.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            try {
+                const [stats, leaderboard] = await Promise.all([
+                    apiRequest(`/stats/${currentUser}`),
+                    apiRequest('/leaderboard')
+                ]);
+
+                document.getElementById('statsContent').innerHTML = `
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <div class="bg-gray-800 rounded-2xl p-5 text-center">
+                            <div class="text-4xl font-bold text-blue-400">${stats.totalWorkouts}</div>
+                            <div class="text-sm text-gray-400 mt-1">Total Workouts</div>
+                        </div>
+                        <div class="bg-gray-800 rounded-2xl p-5 text-center">
+                            <div class="text-4xl font-bold text-green-400">${stats.currentStreak}</div>
+                            <div class="text-sm text-gray-400 mt-1">Day Streak 🔥</div>
+                        </div>
+                        <div class="bg-gray-800 rounded-2xl p-5 text-center">
+                            <div class="text-4xl font-bold text-purple-400">${stats.totalExercises}</div>
+                            <div class="text-sm text-gray-400 mt-1">Exercises Done</div>
+                        </div>
+                        <div class="bg-gray-800 rounded-2xl p-5 text-center">
+                            <div class="text-4xl font-bold text-yellow-400">${stats.thisWeek}</div>
+                            <div class="text-sm text-gray-400 mt-1">This Week</div>
+                        </div>
+                    </div>
+
+                    <h3 class="text-xl font-bold mb-4 text-center">🏆 Leaderboard</h3>
+                    <div class="space-y-3">
+                        ${leaderboard.map((user, index) => `
+                            <div class="bg-gray-800 rounded-xl p-4 flex items-center justify-between ${user.name === currentUser ? 'ring-2 ring-blue-500' : ''}">
+                                <div class="flex items-center gap-3">
+                                    <span class="text-2xl">${index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}</span>
+                                    <span class="text-2xl">${user.icon}</span>
+                                    <div>
+                                        <div class="font-semibold">${user.name}</div>
+                                        <div class="text-sm text-gray-400">${user.total_workouts} workouts • ${user.total_sets} sets</div>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-lg font-bold text-green-400">${user.this_week}</div>
+                                    <div class="text-xs text-gray-500">this week</div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            } catch (e) {
+                document.getElementById('statsContent').innerHTML = `
+                    <div class="text-center py-8 text-red-400">
+                        <p>Failed to load stats.</p>
+                        <button onclick="renderStatsView(document.getElementById('mainContent'))" class="mt-2 text-blue-400">Try again</button>
+                    </div>
+                `;
+            }
         }
 
         // ===== TIMER VIEW =====
@@ -554,10 +957,7 @@
             timerState.timeLeft--;
             
             if (timerState.timeLeft <= 0) {
-                // Play beep
                 playBeep();
-                
-                // Switch phase
                 timerState.isWork = !timerState.isWork;
                 timerState.timeLeft = timerState.isWork ? timerState.workTime : timerState.restTime;
             }
@@ -616,23 +1016,34 @@
         }
 
         // ===== HISTORY VIEW =====
-        function renderHistoryView(container) {
-            const data = getWorkoutData();
-            const userData = data[currentUser] || {};
-            const dates = Object.keys(userData).sort().reverse();
-
+        async function renderHistoryView(container) {
             container.innerHTML = `
                 <h2 class="text-2xl font-bold mb-6 text-center">📊 Workout History</h2>
                 <div class="mb-4 text-center text-gray-400">
                     Showing history for <span class="text-blue-400 font-semibold">${currentUser}</span>
                 </div>
-                ${dates.length === 0 ? `
-                    <div class="text-center py-12 text-gray-500">
-                        <span class="text-6xl">📭</span>
-                        <p class="mt-4">No workouts recorded yet.</p>
-                        <p class="text-sm">Complete a workout to see it here!</p>
-                    </div>
-                ` : `
+                <div id="historyList">
+                    <div class="text-center py-8 text-gray-500">Loading...</div>
+                </div>
+            `;
+
+            try {
+                const data = await getWorkoutData();
+                const userData = data[currentUser] || {};
+                const dates = Object.keys(userData).sort().reverse();
+
+                if (dates.length === 0) {
+                    document.getElementById('historyList').innerHTML = `
+                        <div class="text-center py-12 text-gray-500">
+                            <span class="text-6xl">📭</span>
+                            <p class="mt-4">No workouts recorded yet.</p>
+                            <p class="text-sm">Complete a workout to see it here!</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                document.getElementById('historyList').innerHTML = `
                     <div class="space-y-3">
                         ${dates.map(date => {
                             const workout = userData[date];
@@ -659,18 +1070,23 @@
                             `;
                         }).join('')}
                     </div>
-                `}
-                ${dates.length > 0 ? `
                     <button onclick="clearHistory()" class="w-full mt-8 bg-red-900 hover:bg-red-800 text-red-300 py-3 rounded-xl transition-colors">
                         🗑️ Clear All History
                     </button>
-                ` : ''}
-            `;
+                `;
+            } catch (e) {
+                document.getElementById('historyList').innerHTML = `
+                    <div class="text-center py-8 text-red-400">
+                        <p>Failed to load history.</p>
+                        <button onclick="renderHistoryView(document.getElementById('mainContent'))" class="mt-2 text-blue-400">Try again</button>
+                    </div>
+                `;
+            }
         }
 
-        function showHistoryDetail(date) {
-            const data = getWorkoutData();
-            const workout = data[currentUser][date];
+        async function showHistoryDetail(date) {
+            const data = await getWorkoutData();
+            const workout = data[currentUser]?.[date] || { exercises: {} };
             const displayDate = new Date(date + 'T12:00:00').toLocaleDateString('en-US', { 
                 weekday: 'long', 
                 month: 'long', 
@@ -694,7 +1110,7 @@
                                 ${sets.map((set, i) => set ? `
                                     <div class="flex justify-between">
                                         <span>Set ${i + 1}</span>
-                                        <span>${set.reps} ${set.weight ? 'lbs' : 'reps/sec'} ${set.completed ? '✅' : '⬜'}</span>
+                                        <span>${set.reps} reps/sec ${set.completed ? '✅' : '⬜'}</span>
                                     </div>
                                 ` : '').join('')}
                             </div>
@@ -704,11 +1120,22 @@
             `;
         }
 
-        function clearHistory() {
+        async function clearHistory() {
             if (confirm(`Are you sure you want to clear all workout history for ${currentUser}?`)) {
-                const data = getWorkoutData();
+                // Clear local
+                const data = getLocalWorkoutData();
                 data[currentUser] = {};
-                saveWorkoutData(data);
+                saveLocalWorkoutData(data);
+                
+                // Clear remote
+                if (isOnline) {
+                    try {
+                        await apiRequest(`/workouts/${currentUser}`, { method: 'DELETE' });
+                    } catch (e) {
+                        console.error('Failed to clear remote history:', e);
+                    }
+                }
+                
                 renderHistoryView(document.getElementById('mainContent'));
             }
         }
@@ -719,6 +1146,14 @@
                 <h2 class="text-2xl font-bold mb-6 text-center">⚙️ Settings</h2>
                 
                 <div class="space-y-4">
+                    <div class="bg-gray-800 rounded-2xl p-5">
+                        <h3 class="text-lg font-semibold mb-4">Connection Status</h3>
+                        <div class="flex items-center gap-3">
+                            <span class="w-3 h-3 rounded-full ${isOnline ? 'bg-green-500' : 'bg-red-500'}"></span>
+                            <span>${isOnline ? 'Connected to server' : 'Offline - using local storage'}</span>
+                        </div>
+                    </div>
+
                     <div class="bg-gray-800 rounded-2xl p-5">
                         <h3 class="text-lg font-semibold mb-4">Workout Schedule</h3>
                         <p class="text-gray-400 text-sm mb-4">Bodyweight exercises • No equipment needed</p>
@@ -735,11 +1170,6 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="flex gap-2">
-                                        <button onclick="editDay(${index})" class="bg-blue-600 hover:bg-blue-500 px-3 py-2 rounded-lg text-sm font-semibold transition-colors">
-                                            Edit
-                                        </button>
-                                    </div>
                                 </div>
                             `).join('')}
                         </div>
@@ -754,8 +1184,8 @@
                             <button onclick="exportData()" class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-xl font-semibold transition-colors">
                                 📤 Export All Data
                             </button>
-                            <button onclick="importData()" class="w-full bg-purple-600 hover:bg-purple-500 py-3 rounded-xl font-semibold transition-colors">
-                                📥 Import Data
+                            <button onclick="syncLocalData()" class="w-full bg-purple-600 hover:bg-purple-500 py-3 rounded-xl font-semibold transition-colors ${!isOnline ? 'opacity-50' : ''}">
+                                🔄 Sync Local Data
                             </button>
                         </div>
                     </div>
@@ -763,222 +1193,37 @@
             `;
         }
 
-        function editDay(dayIndex) {
-            const day = workoutSchedule[dayIndex];
-            const container = document.getElementById('mainContent');
-            
-            container.innerHTML = `
-                <button onclick="showView('settings')" class="flex items-center text-blue-400 mb-4 hover:text-blue-300">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
-                    Back to Settings
-                </button>
-                
-                <h2 class="text-2xl font-bold mb-6 text-center">Edit ${day.dayOfWeek}</h2>
-                
-                <div class="space-y-4">
-                    <div class="bg-gray-800 rounded-2xl p-5">
-                        <label class="block text-sm font-semibold mb-2">Day Name</label>
-                        <input type="text" id="editDayName" value="${day.name}" class="w-full bg-gray-700 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none">
-                    </div>
-                    
-                    <div class="bg-gray-800 rounded-2xl p-5">
-                        <label class="block text-sm font-semibold mb-2">Emoji</label>
-                        <input type="text" id="editDayEmoji" value="${day.emoji}" class="w-full bg-gray-700 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none" maxlength="2">
-                    </div>
-                    
-                    ${day.isCardGame ? renderCardGameEditor(day) : renderExerciseEditor(day)}
-                    
-                    <button onclick="saveDayEdits(${dayIndex})" class="w-full bg-green-600 hover:bg-green-500 py-4 rounded-2xl font-bold text-lg transition-colors">
-                        💾 Save Changes
-                    </button>
-                </div>
-            `;
-        }
-
-        function renderExerciseEditor(day) {
-            return `
-                <div class="bg-gray-800 rounded-2xl p-5">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-lg font-semibold">Exercises</h3>
-                        <button onclick="addExerciseToCurrentDay()" class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-lg text-sm font-semibold transition-colors">
-                            ➕ Add Exercise
-                        </button>
-                    </div>
-                    
-                    <div class="space-y-3" id="exerciseList">
-                        ${day.exercises.map((ex, exIndex) => `
-                            <div class="bg-gray-700 rounded-xl p-4 exercise-item">
-                                <div class="flex justify-between items-start mb-3">
-                                    <div class="flex-1">
-                                        <input type="text" value="${ex.name}" class="exercise-name w-full bg-gray-600 rounded-lg px-3 py-2 mb-2 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Exercise name">
-                                        <div class="grid grid-cols-2 gap-2">
-                                            <select class="exercise-type bg-gray-600 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none">
-                                                <option value="strength" ${ex.type === 'strength' ? 'selected' : ''}>Strength</option>
-                                                <option value="cardio" ${ex.type === 'cardio' ? 'selected' : ''}>Cardio</option>
-                                                <option value="stretch" ${ex.type === 'stretch' ? 'selected' : ''}>Stretch</option>
-                                                <option value="recovery" ${ex.type === 'recovery' ? 'selected' : ''}>Recovery</option>
-                                            </select>
-                                            <div class="exercise-params">
-                                                ${ex.type === 'strength' ? `
-                                                    <input type="number" value="${ex.sets || 3}" class="exercise-sets w-full bg-gray-600 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Sets">
-                                                ` : ex.type === 'cardio' ? `
-                                                    <div class="grid grid-cols-3 gap-1">
-                                                        <input type="number" value="${ex.duration || 15}" class="exercise-duration bg-gray-600 rounded-lg px-2 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Min">
-                                                        <input type="number" value="${ex.work || 30}" class="exercise-work bg-gray-600 rounded-lg px-2 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Work">
-                                                        <input type="number" value="${ex.rest || 30}" class="exercise-rest bg-gray-600 rounded-lg px-2 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Rest">
-                                                    </div>
-                                                ` : `
-                                                    <input type="number" value="${ex.sets || ex.duration || 2}" class="exercise-sets w-full bg-gray-600 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Sets/Duration">
-                                                `}
-                                            </div>
-                                        </div>
-                                        <input type="url" value="${ex.videoLink || ''}" class="exercise-video w-full bg-gray-600 rounded-lg px-3 py-2 mt-2 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Video link (optional)">
-                                    </div>
-                                    <button onclick="removeExerciseFromCurrentDay(this)" class="bg-red-600 hover:bg-red-500 p-2 rounded-lg ml-2">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                    </button>
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-            `;
-        }
-
-        function renderCardGameEditor(day) {
-            return `
-                <div class="bg-gray-800 rounded-2xl p-5">
-                    <h3 class="text-lg font-semibold mb-4">Card Game Rules (Bodyweight Only)</h3>
-                    <div class="space-y-3" id="exerciseList">
-                        ${Object.entries(day.rules).map(([suit, data]) => `
-                            <div class="bg-gray-700 rounded-xl p-4">
-                                <div class="flex items-center gap-3 mb-2">
-                                    <span class="${['hearts', 'diamonds'].includes(suit) ? 'text-red-500' : 'text-white'} text-xl">${data.emoji}</span>
-                                    <span class="font-semibold capitalize">${suit}</span>
-                                </div>
-                                <input type="text" value="${data.exercise}" data-suit="${suit}" class="card-exercise w-full bg-gray-600 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Exercise name">
-                                <input type="url" value="${data.videoLink || ''}" data-suit="${suit}" class="card-video w-full bg-gray-600 rounded-lg px-3 py-2 mt-2 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Video link (optional)">
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-            `;
-        }
-
-        function addExerciseToCurrentDay() {
-            const exerciseList = document.getElementById('exerciseList');
-            const newExercise = document.createElement('div');
-            newExercise.className = 'bg-gray-700 rounded-xl p-4 exercise-item';
-            newExercise.innerHTML = `
-                <div class="flex justify-between items-start mb-3">
-                    <div class="flex-1">
-                        <input type="text" value="New Exercise" class="exercise-name w-full bg-gray-600 rounded-lg px-3 py-2 mb-2 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Exercise name">
-                        <div class="grid grid-cols-2 gap-2">
-                            <select class="exercise-type bg-gray-600 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none" onchange="updateExerciseParams(this)">
-                                <option value="strength" selected>Strength</option>
-                                <option value="cardio">Cardio</option>
-                                <option value="stretch">Stretch</option>
-                                <option value="recovery">Recovery</option>
-                            </select>
-                            <div class="exercise-params">
-                                <input type="number" value="3" class="exercise-sets w-full bg-gray-600 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Sets">
-                            </div>
-                        </div>
-                        <input type="url" value="" class="exercise-video w-full bg-gray-600 rounded-lg px-3 py-2 mt-2 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Video link (optional)">
-                    </div>
-                    <button onclick="removeExerciseFromCurrentDay(this)" class="bg-red-600 hover:bg-red-500 p-2 rounded-lg ml-2">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                    </button>
-                </div>
-            `;
-            exerciseList.appendChild(newExercise);
-        }
-
-        function removeExerciseFromCurrentDay(button) {
-            button.closest('.exercise-item').remove();
-        }
-
-        function updateExerciseParams(selectElement) {
-            const paramsContainer = selectElement.parentElement.querySelector('.exercise-params');
-            const type = selectElement.value;
-            
-            if (type === 'strength') {
-                paramsContainer.innerHTML = `
-                    <input type="number" value="3" class="exercise-sets w-full bg-gray-600 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Sets">
-                `;
-            } else if (type === 'cardio') {
-                paramsContainer.innerHTML = `
-                    <div class="grid grid-cols-3 gap-1">
-                        <input type="number" value="15" class="exercise-duration bg-gray-600 rounded-lg px-2 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Min">
-                        <input type="number" value="30" class="exercise-work bg-gray-600 rounded-lg px-2 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Work">
-                        <input type="number" value="30" class="exercise-rest bg-gray-600 rounded-lg px-2 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Rest">
-                    </div>
-                `;
-            } else {
-                paramsContainer.innerHTML = `
-                    <input type="number" value="2" class="exercise-sets w-full bg-gray-600 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Sets/Duration">
-                `;
-            }
-        }
-
-        function saveDayEdits(dayIndex) {
-            const day = workoutSchedule[dayIndex];
-            day.name = document.getElementById('editDayName').value;
-            day.emoji = document.getElementById('editDayEmoji').value;
-            
-            if (day.isCardGame) {
-                // Save card game rules
-                const exerciseInputs = document.querySelectorAll('.card-exercise');
-                const videoInputs = document.querySelectorAll('.card-video');
-                exerciseInputs.forEach(input => {
-                    const suit = input.dataset.suit;
-                    day.rules[suit].exercise = input.value;
-                });
-                videoInputs.forEach(input => {
-                    const suit = input.dataset.suit;
-                    day.rules[suit].videoLink = input.value;
-                });
-            } else {
-                // Save exercises
-                const exerciseItems = document.querySelectorAll('.exercise-item');
-                day.exercises = Array.from(exerciseItems).map(item => {
-                    const name = item.querySelector('.exercise-name').value;
-                    const type = item.querySelector('.exercise-type').value;
-                    const videoLink = item.querySelector('.exercise-video').value;
-                    
-                    if (type === 'strength') {
-                        const sets = parseInt(item.querySelector('.exercise-sets').value) || 3;
-                        return { name, type, sets, videoLink };
-                    } else if (type === 'cardio') {
-                        const duration = parseInt(item.querySelector('.exercise-duration').value) || 15;
-                        const work = parseInt(item.querySelector('.exercise-work').value) || 30;
-                        const rest = parseInt(item.querySelector('.exercise-rest').value) || 30;
-                        return { name, type, duration, work, rest, videoLink };
-                    } else {
-                        const sets = parseInt(item.querySelector('.exercise-sets').value) || 2;
-                        return { name, type, sets, isHold: true, holdTime: 30, videoLink };
-                    }
-                });
-            }
-            
-            saveWorkoutSchedule();
-            showView('settings');
-        }
-
         function resetToDefaults() {
-            if (confirm('Are you sure you want to reset to the default bodyweight workout schedule? This will overwrite your current schedule.')) {
+            if (confirm('Are you sure you want to reset to the default bodyweight workout schedule?')) {
                 workoutSchedule = JSON.parse(JSON.stringify(defaultWorkoutSchedule));
                 saveWorkoutSchedule();
                 renderSettingsView(document.getElementById('mainContent'));
             }
         }
 
-        function exportData() {
+        async function exportData() {
+            const localData = getLocalWorkoutData();
+            let remoteData = {};
+            
+            if (isOnline) {
+                try {
+                    remoteData = {
+                        Father: await apiRequest('/workouts/Father'),
+                        Son: await apiRequest('/workouts/Son')
+                    };
+                } catch (e) {
+                    console.error('Failed to fetch remote data:', e);
+                }
+            }
+
             const data = {
-                workoutSchedule: workoutSchedule,
-                workoutData: getWorkoutData(),
-                currentUser: currentUser
+                workoutSchedule,
+                localData,
+                remoteData,
+                currentUser,
+                exportedAt: new Date().toISOString()
             };
+            
             const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -986,40 +1231,6 @@
             a.download = 'workout-tracker-data.json';
             a.click();
             URL.revokeObjectURL(url);
-        }
-
-        function importData() {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = '.json';
-            input.onchange = (e) => {
-                const file = e.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        try {
-                            const data = JSON.parse(e.target.result);
-                            if (data.workoutSchedule) {
-                                workoutSchedule = data.workoutSchedule;
-                                saveWorkoutSchedule();
-                            }
-                            if (data.workoutData) {
-                                localStorage.setItem('workoutData', JSON.stringify(data.workoutData));
-                            }
-                            if (data.currentUser) {
-                                currentUser = data.currentUser;
-                                localStorage.setItem('currentUser', currentUser);
-                            }
-                            alert('Data imported successfully!');
-                            showView('home');
-                        } catch (error) {
-                            alert('Error importing data: ' + error.message);
-                        }
-                    };
-                    reader.readAsText(file);
-                }
-            };
-            input.click();
         }
 
         // ===== DECK OF CARDS GAME =====
@@ -1038,7 +1249,6 @@
                     deck.push({ suit, value });
                 }
             }
-            // Shuffle
             for (let i = deck.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [deck[i], deck[j]] = [deck[j], deck[i]];
@@ -1074,7 +1284,6 @@
                     <span class="text-4xl">🃏</span>
                     <h2 class="text-2xl font-bold mt-2">Deck of Cards Challenge</h2>
                     <p class="text-gray-400 mt-1">20 minutes of bodyweight exercises!</p>
-                    <p class="text-green-400 text-sm mt-1">No equipment needed</p>
                 </div>
 
                 <div class="bg-gray-800 rounded-2xl p-4 mb-6">
@@ -1083,7 +1292,6 @@
                             <div class="flex items-center gap-2">
                                 <span class="${['hearts', 'diamonds'].includes(suit) ? 'text-red-500' : 'text-white'} text-xl">${data.emoji}</span>
                                 <span>${data.exercise}</span>
-                                <a href="${data.videoLink}" target="_blank" class="text-red-400 text-xs">📹</a>
                             </div>
                         `).join('')}
                     </div>
@@ -1142,7 +1350,7 @@
                 
                 if (cardGameTimeLeft <= 0) {
                     stopCardGame();
-                    alert('🎉 Time\'s up! Great bodyweight workout!');
+                    alert('🎉 Time\'s up! Great workout!');
                 }
             }, 1000);
             
@@ -1150,9 +1358,7 @@
         }
 
         function drawCard() {
-            if (cardDeck.length === 0) {
-                cardDeck = createDeck();
-            }
+            if (cardDeck.length === 0) cardDeck = createDeck();
             
             currentCard = cardDeck.pop();
             cardsDrawn++;
@@ -1175,13 +1381,12 @@
             }, 100);
         }
 
-        function stopCardGame() {
+        async function stopCardGame() {
             clearInterval(cardGameTimer);
             cardGameTimer = null;
             
-            // Save to history
-            const data = getWorkoutData();
             const today = getTodayKey();
+            const data = getLocalWorkoutData();
             if (!data[currentUser][today]) {
                 data[currentUser][today] = { exercises: {} };
             }
@@ -1189,8 +1394,39 @@
             data[currentUser][today].dayName = 'Full Body Challenge';
             data[currentUser][today].dayOfWeek = 'Friday';
             data[currentUser][today].exercises['Deck of Cards'] = [{ reps: cardsDrawn, completed: true }];
-            saveWorkoutData(data);
             
+            if (isOnline) {
+                try {
+                    await apiRequest('/workouts/complete', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            userName: currentUser,
+                            date: today,
+                            dayCompleted: 5,
+                            dayName: 'Full Body Challenge',
+                            dayOfWeek: 'Friday'
+                        })
+                    });
+                    await apiRequest('/workouts/exercise', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            userName: currentUser,
+                            date: today,
+                            exerciseName: 'Deck of Cards',
+                            setIndex: 0,
+                            weight: 0,
+                            reps: cardsDrawn,
+                            completed: true
+                        })
+                    });
+                } catch (e) {
+                    data[currentUser][today].needsSync = true;
+                }
+            } else {
+                data[currentUser][today].needsSync = true;
+            }
+            
+            saveLocalWorkoutData(data);
             renderCardGameView(document.getElementById('mainContent'));
         }
 
@@ -1203,6 +1439,10 @@
 
         // ===== INITIALIZE APP =====
         showView('home');
+        checkUnreadNotifications();
+        
+        // Check notifications periodically
+        setInterval(checkUnreadNotifications, 30000);
     </script>
 </body>
 </html>

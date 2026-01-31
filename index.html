@@ -69,55 +69,72 @@
         const defaultWorkoutSchedule = [
             {
                 day: 1,
-                name: "Legs & Push",
-                emoji: "🦵",
+                dayOfWeek: "Monday",
+                name: "Upper Body Push & Core",
+                emoji: "💪",
                 exercises: [
-                    { name: "Resistance Band Squats", type: "strength", sets: 3, videoLink: "https://www.youtube.com/results?search_query=resistance+band+squats+form+shorts" },
-                    { name: "Push-ups", type: "strength", sets: 3, videoLink: "https://www.youtube.com/results?search_query=perfect+push+up+form+shorts" },
-                    { name: "Dot Drills", type: "cardio", duration: 15, work: 45, rest: 15, videoLink: "https://www.youtube.com/results?search_query=dot+drill+agility+shorts" }
+                    { name: "Push-ups", type: "strength", sets: 3, videoLink: "https://www.youtube.com/results?search_query=perfect+push+up+form+tutorial+shorts" },
+                    { name: "Pike Push-ups", type: "strength", sets: 3, videoLink: "https://www.youtube.com/results?search_query=pike+push+up+shoulders+tutorial+shorts" },
+                    { name: "Diamond Push-ups", type: "strength", sets: 3, videoLink: "https://www.youtube.com/results?search_query=diamond+push+ups+triceps+form+shorts" },
+                    { name: "Plank Hold", type: "strength", sets: 3, isHold: true, holdTime: 45, videoLink: "https://www.youtube.com/results?search_query=plank+proper+form+tutorial+shorts" },
+                    { name: "High Knees", type: "cardio", duration: 10, work: 30, rest: 30, videoLink: "https://www.youtube.com/results?search_query=high+knees+exercise+shorts" }
                 ]
             },
             {
                 day: 2,
-                name: "Hinge & Pull",
-                emoji: "🏋️",
+                dayOfWeek: "Tuesday",
+                name: "Active Recovery",
+                emoji: "🚶",
+                isRecovery: true,
                 exercises: [
-                    { name: "Deadlift / Band Pull-Through", type: "strength", sets: 3, videoLink: "https://www.youtube.com/results?search_query=resistance+band+deadlift+proper+form+shorts" },
-                    { name: "Bent Over Rows", type: "strength", sets: 3, videoLink: "https://www.youtube.com/results?search_query=resistance+band+bent+over+row+proper+form+shorts" },
-                    { name: "Shadow Boxing", type: "cardio", duration: 15, work: 60, rest: 60, videoLink: "https://www.youtube.com/results?search_query=shadow+boxing+workout+shorts" }
+                    { name: "Brisk Walking", type: "recovery", duration: 30, description: "30-minute walk at a comfortable pace", videoLink: "https://www.youtube.com/results?search_query=benefits+of+walking+shorts" },
+                    { name: "Standing Quad Stretch", type: "stretch", sets: 2, isHold: true, holdTime: 30, videoLink: "https://www.youtube.com/results?search_query=standing+quad+stretch+shorts" },
+                    { name: "Standing Hamstring Stretch", type: "stretch", sets: 2, isHold: true, holdTime: 30, videoLink: "https://www.youtube.com/results?search_query=standing+hamstring+stretch+shorts" },
+                    { name: "Arm Circles", type: "stretch", sets: 2, isHold: true, holdTime: 30, videoLink: "https://www.youtube.com/results?search_query=arm+circles+stretch+shorts" },
+                    { name: "Cat-Cow Stretch", type: "stretch", sets: 2, isHold: true, holdTime: 30, videoLink: "https://www.youtube.com/results?search_query=cat+cow+stretch+tutorial+shorts" }
                 ]
             },
             {
                 day: 3,
-                name: "Shoulders & Core",
-                emoji: "💪",
+                dayOfWeek: "Wednesday",
+                name: "Lower Body & Glutes",
+                emoji: "🦵",
                 exercises: [
-                    { name: "Overhead Press", type: "strength", sets: 3, videoLink: "https://www.youtube.com/results?search_query=resistance+band+overhead+press+form+shorts" },
-                    { name: "Plank High-Fives", type: "strength", sets: 3, isHold: true, holdTime: 45, videoLink: "https://www.youtube.com/results?search_query=plank+partner+high+five+shorts" },
-                    { name: "Jumping Jacks / Seal Jacks", type: "cardio", duration: 15, work: 30, rest: 30, videoLink: "https://www.youtube.com/results?search_query=seal+jacks+exercise+shorts" }
+                    { name: "Bodyweight Squats", type: "strength", sets: 3, videoLink: "https://www.youtube.com/results?search_query=bodyweight+squat+proper+form+shorts" },
+                    { name: "Reverse Lunges", type: "strength", sets: 3, videoLink: "https://www.youtube.com/results?search_query=reverse+lunge+form+tutorial+shorts" },
+                    { name: "Glute Bridges", type: "strength", sets: 3, videoLink: "https://www.youtube.com/results?search_query=glute+bridge+proper+form+shorts" },
+                    { name: "Wall Sit", type: "strength", sets: 3, isHold: true, holdTime: 45, videoLink: "https://www.youtube.com/results?search_query=wall+sit+proper+form+shorts" },
+                    { name: "Calf Raises", type: "strength", sets: 3, videoLink: "https://www.youtube.com/results?search_query=calf+raises+bodyweight+shorts" },
+                    { name: "Jump Squats", type: "cardio", duration: 10, work: 30, rest: 30, videoLink: "https://www.youtube.com/results?search_query=jump+squat+form+shorts" }
                 ]
             },
             {
                 day: 4,
-                name: "Arms & Accessories",
-                emoji: "💪",
+                dayOfWeek: "Thursday",
+                name: "Active Recovery",
+                emoji: "🧘",
+                isRecovery: true,
                 exercises: [
-                    { name: "Bicep Curls", type: "strength", sets: 3, videoLink: "https://www.youtube.com/results?search_query=resistance+band+bicep+curl+form+shorts" },
-                    { name: "Tricep Extensions", type: "strength", sets: 3, videoLink: "https://www.youtube.com/results?search_query=resistance+band+tricep+extension+form+shorts" },
-                    { name: "Mountain Climbers", type: "cardio", duration: 15, work: 30, rest: 30, videoLink: "https://www.youtube.com/results?search_query=mountain+climbers+form+shorts" }
+                    { name: "Easy Walking", type: "recovery", duration: 20, description: "20-minute relaxed walk", videoLink: "https://www.youtube.com/results?search_query=walking+for+recovery+shorts" },
+                    { name: "Child's Pose", type: "stretch", sets: 2, isHold: true, holdTime: 45, videoLink: "https://www.youtube.com/results?search_query=childs+pose+stretch+shorts" },
+                    { name: "Downward Dog", type: "stretch", sets: 2, isHold: true, holdTime: 30, videoLink: "https://www.youtube.com/results?search_query=downward+dog+stretch+shorts" },
+                    { name: "Hip Flexor Stretch", type: "stretch", sets: 2, isHold: true, holdTime: 30, videoLink: "https://www.youtube.com/results?search_query=hip+flexor+stretch+shorts" },
+                    { name: "Seated Spinal Twist", type: "stretch", sets: 2, isHold: true, holdTime: 30, videoLink: "https://www.youtube.com/results?search_query=seated+spinal+twist+stretch+shorts" },
+                    { name: "Deep Breathing", type: "stretch", sets: 1, isHold: true, holdTime: 120, videoLink: "https://www.youtube.com/results?search_query=deep+breathing+exercise+relaxation+shorts" }
                 ]
             },
             {
                 day: 5,
-                name: "Deck of Cards Challenge",
+                dayOfWeek: "Friday",
+                name: "Full Body Challenge",
                 emoji: "🃏",
                 isCardGame: true,
                 duration: 20,
                 rules: {
-                    hearts: { exercise: "Squats", emoji: "❤️", videoLink: "https://www.youtube.com/results?search_query=resistance+band+squat+form+shorts" },
+                    hearts: { exercise: "Squats", emoji: "❤️", videoLink: "https://www.youtube.com/results?search_query=bodyweight+squat+form+shorts" },
                     diamonds: { exercise: "Push-ups", emoji: "♦️", videoLink: "https://www.youtube.com/results?search_query=perfect+push+up+form+shorts" },
-                    spades: { exercise: "Lunges", emoji: "♠️", videoLink: "https://www.youtube.com/results?search_query=lunge+form+shorts" },
-                    clubs: { exercise: "Sit-ups", emoji: "♣️", videoLink: "https://www.youtube.com/results?search_query=sit+up+form+shorts" }
+                    spades: { exercise: "Lunges (each leg)", emoji: "♠️", videoLink: "https://www.youtube.com/results?search_query=lunge+form+shorts" },
+                    clubs: { exercise: "Burpees", emoji: "♣️", videoLink: "https://www.youtube.com/results?search_query=burpee+form+tutorial+shorts" }
                 }
             }
         ];
@@ -204,40 +221,54 @@
             }
         }
 
+        function getTodayWorkoutIndex() {
+            const today = new Date().getDay(); // 0=Sunday, 1=Monday, etc.
+            const dayMap = { 1: 0, 2: 1, 3: 2, 4: 3, 5: 4 }; // Mon-Fri mapped to array indices
+            return dayMap[today] !== undefined ? dayMap[today] : -1;
+        }
+
         function renderHomeView(container) {
             const today = new Date();
             const dayOfWeek = today.toLocaleDateString('en-US', { weekday: 'long' });
+            const todayIndex = getTodayWorkoutIndex();
             
             container.innerHTML = `
                 <div class="text-center mb-6">
                     <p class="text-gray-400">Today is ${dayOfWeek}</p>
                     <h2 class="text-2xl font-bold mt-2">Choose Your Workout</h2>
+                    ${todayIndex >= 0 ? `<p class="text-green-400 text-sm mt-1">Today's workout: ${workoutSchedule[todayIndex].name}</p>` : '<p class="text-yellow-400 text-sm mt-1">Rest day - enjoy your weekend! 🎉</p>'}
                 </div>
                 <div class="space-y-4">
                     ${workoutSchedule.map((day, index) => `
                         <button onclick="${day.isCardGame ? 'showCardGame()' : `showWorkout(${index})`}" 
-                            class="w-full bg-gradient-to-r ${getGradient(index)} p-5 rounded-2xl text-left shadow-lg hover:scale-[1.02] transition-transform active:scale-[0.98]">
+                            class="w-full bg-gradient-to-r ${getGradient(index, day)} p-5 rounded-2xl text-left shadow-lg hover:scale-[1.02] transition-transform active:scale-[0.98] ${todayIndex === index ? 'ring-2 ring-yellow-400' : ''}">
                             <div class="flex items-center justify-between">
                                 <div>
                                     <span class="text-3xl mr-3">${day.emoji}</span>
-                                    <span class="text-xl font-bold">Day ${day.day}</span>
+                                    <span class="text-xl font-bold">${day.dayOfWeek}</span>
+                                    ${todayIndex === index ? '<span class="ml-2 bg-yellow-500 text-black text-xs px-2 py-1 rounded-full font-bold">TODAY</span>' : ''}
                                 </div>
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                             </div>
                             <p class="mt-2 text-lg opacity-90">${day.name}</p>
-                            ${day.isCardGame ? '<p class="text-sm opacity-75 mt-1">20 min continuous challenge</p>' : `<p class="text-sm opacity-75 mt-1">${day.exercises.length} exercises</p>`}
+                            ${day.isCardGame ? '<p class="text-sm opacity-75 mt-1">20 min bodyweight challenge</p>' : 
+                              day.isRecovery ? '<p class="text-sm opacity-75 mt-1">Light movement & stretching</p>' :
+                              `<p class="text-sm opacity-75 mt-1">${day.exercises.length} exercises • No equipment needed</p>`}
                         </button>
                     `).join('')}
                 </div>
             `;
         }
 
-        function getGradient(index) {
+        function getGradient(index, day) {
+            if (day.isRecovery) {
+                return 'from-teal-600 to-teal-800';
+            }
             const gradients = [
                 'from-blue-600 to-blue-800',
-                'from-purple-600 to-purple-800',
+                'from-teal-600 to-teal-800',
                 'from-green-600 to-green-800',
-                'from-orange-600 to-orange-800',
+                'from-teal-600 to-teal-800',
                 'from-red-600 to-red-800'
             ];
             return gradients[index % gradients.length];
@@ -264,19 +295,82 @@
                 </button>
                 <div class="text-center mb-6">
                     <span class="text-4xl">${day.emoji}</span>
-                    <h2 class="text-2xl font-bold mt-2">Day ${day.day}: ${day.name}</h2>
+                    <h2 class="text-2xl font-bold mt-2">${day.dayOfWeek}: ${day.name}</h2>
+                    ${day.isRecovery ? '<p class="text-teal-400 text-sm mt-2">Take it easy - focus on recovery and mobility</p>' : '<p class="text-gray-400 text-sm mt-2">Bodyweight only • No equipment needed</p>'}
                 </div>
                 <div class="space-y-6">
-                    ${day.exercises.map((ex, exIndex) => renderExerciseCard(ex, exIndex, workoutData)).join('')}
+                    ${day.exercises.map((ex, exIndex) => renderExerciseCard(ex, exIndex, workoutData, day.isRecovery)).join('')}
                 </div>
                 <button onclick="completeWorkout(${dayIndex})" class="w-full mt-8 bg-green-600 hover:bg-green-500 text-white font-bold py-4 px-6 rounded-2xl text-lg transition-colors">
-                    ✅ Complete Workout
+                    ✅ Complete ${day.isRecovery ? 'Recovery' : 'Workout'}
                 </button>
             `;
         }
 
-        function renderExerciseCard(exercise, exIndex, workoutData) {
+        function renderExerciseCard(exercise, exIndex, workoutData, isRecovery) {
             const savedData = workoutData.exercises[exercise.name] || [];
+            
+            // Recovery/Walking type
+            if (exercise.type === 'recovery') {
+                return `
+                    <div class="bg-gray-800 rounded-2xl p-5 shadow-lg border-l-4 border-teal-500">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center">
+                                <span class="text-2xl mr-3">🚶</span>
+                                <div>
+                                    <h3 class="font-bold text-lg">${exercise.name}</h3>
+                                    <p class="text-sm text-gray-400">${exercise.description || exercise.duration + ' minutes'}</p>
+                                </div>
+                            </div>
+                            <a href="${exercise.videoLink}" target="_blank" class="bg-red-600 hover:bg-red-500 p-2 rounded-full">
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"></path></svg>
+                            </a>
+                        </div>
+                        <div class="flex items-center justify-between py-3">
+                            <span class="text-gray-400">${exercise.duration} minutes</span>
+                            <label class="flex items-center">
+                                <input type="checkbox" ${savedData[0]?.completed ? 'checked' : ''} 
+                                    onchange="saveSet('${exercise.name}', 0, 0, ${exercise.duration}, this.checked)"
+                                    class="w-7 h-7 rounded-lg bg-gray-700 border-gray-600 text-green-500 focus:ring-green-500">
+                            </label>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Stretch type
+            if (exercise.type === 'stretch') {
+                const setsHtml = [];
+                for (let i = 0; i < exercise.sets; i++) {
+                    const setData = savedData[i] || { completed: false };
+                    setsHtml.push(`
+                        <div class="flex items-center gap-3 py-3 border-b border-gray-700 last:border-0">
+                            <span class="text-gray-400 w-16">Set ${i + 1}</span>
+                            <span class="text-gray-400 flex-1">${exercise.holdTime}s hold (each side)</span>
+                            <label class="flex items-center">
+                                <input type="checkbox" ${setData.completed ? 'checked' : ''} 
+                                    onchange="saveSet('${exercise.name}', ${i}, 0, ${exercise.holdTime}, this.checked)"
+                                    class="w-7 h-7 rounded-lg bg-gray-700 border-gray-600 text-green-500 focus:ring-green-500">
+                            </label>
+                        </div>
+                    `);
+                }
+                
+                return `
+                    <div class="bg-gray-800 rounded-2xl p-5 shadow-lg border-l-4 border-purple-500">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center">
+                                <span class="text-2xl mr-3">🧘</span>
+                                <h3 class="font-bold text-lg">${exercise.name}</h3>
+                            </div>
+                            <a href="${exercise.videoLink}" target="_blank" class="bg-red-600 hover:bg-red-500 p-2 rounded-full">
+                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"></path></svg>
+                            </a>
+                        </div>
+                        ${setsHtml.join('')}
+                    </div>
+                `;
+            }
             
             if (exercise.type === 'cardio') {
                 return `
@@ -320,16 +414,13 @@
                     setsHtml += `
                         <div class="flex items-center gap-3 py-3 border-b border-gray-700 last:border-0">
                             <span class="text-gray-400 w-16">Set ${i + 1}</span>
-                            <input type="number" placeholder="lbs" value="${setData.weight || ''}" 
-                                onchange="saveSet('${exercise.name}', ${i}, this.value, this.parentElement.querySelector('[placeholder=reps]').value, this.parentElement.querySelector('[type=checkbox]').checked)"
-                                class="w-20 bg-gray-700 rounded-lg px-3 py-2 text-center focus:ring-2 focus:ring-blue-500 outline-none">
-                            <span class="text-gray-500">×</span>
                             <input type="number" placeholder="reps" value="${setData.reps || ''}"
-                                onchange="saveSet('${exercise.name}', ${i}, this.parentElement.querySelector('[placeholder=lbs]').value, this.value, this.parentElement.querySelector('[type=checkbox]').checked)"
-                                class="w-20 bg-gray-700 rounded-lg px-3 py-2 text-center focus:ring-2 focus:ring-blue-500 outline-none">
-                            <label class="flex items-center">
+                                onchange="saveSet('${exercise.name}', ${i}, 0, this.value, this.parentElement.querySelector('[type=checkbox]').checked)"
+                                class="w-24 bg-gray-700 rounded-lg px-3 py-2 text-center focus:ring-2 focus:ring-blue-500 outline-none">
+                            <span class="text-gray-500 text-sm">reps</span>
+                            <label class="flex items-center ml-auto">
                                 <input type="checkbox" ${setData.completed ? 'checked' : ''}
-                                    onchange="saveSet('${exercise.name}', ${i}, this.parentElement.parentElement.querySelector('[placeholder=lbs]').value, this.parentElement.parentElement.querySelector('[placeholder=reps]').value, this.checked)"
+                                    onchange="saveSet('${exercise.name}', ${i}, 0, this.parentElement.parentElement.querySelector('[placeholder=reps]').value, this.checked)"
                                     class="w-7 h-7 rounded-lg bg-gray-700 border-gray-600 text-green-500 focus:ring-green-500">
                             </label>
                         </div>
@@ -365,9 +456,11 @@
             }
             data[currentUser][today].dayCompleted = workoutSchedule[dayIndex].day;
             data[currentUser][today].dayName = workoutSchedule[dayIndex].name;
+            data[currentUser][today].dayOfWeek = workoutSchedule[dayIndex].dayOfWeek;
             saveWorkoutData(data);
             
-            alert(`🎉 Great job ${currentUser}! Day ${workoutSchedule[dayIndex].day} completed!`);
+            const isRecovery = workoutSchedule[dayIndex].isRecovery;
+            alert(`🎉 Great job ${currentUser}! ${workoutSchedule[dayIndex].dayOfWeek}'s ${isRecovery ? 'recovery' : 'workout'} completed!`);
             showView('home');
         }
 
@@ -554,7 +647,7 @@
                                     <div>
                                         <div class="font-semibold">${displayDate}</div>
                                         ${workout.dayCompleted ? `
-                                            <div class="text-sm text-green-400">✅ Day ${workout.dayCompleted}: ${workout.dayName}</div>
+                                            <div class="text-sm text-green-400">✅ ${workout.dayOfWeek || 'Day ' + workout.dayCompleted}: ${workout.dayName}</div>
                                         ` : `
                                             <div class="text-sm text-gray-400">${exerciseCount} exercises logged</div>
                                         `}
@@ -592,7 +685,7 @@
                     Back to History
                 </button>
                 <h2 class="text-xl font-bold mb-2">${displayDate}</h2>
-                ${workout.dayCompleted ? `<p class="text-green-400 mb-4">Day ${workout.dayCompleted}: ${workout.dayName}</p>` : ''}
+                ${workout.dayCompleted ? `<p class="text-green-400 mb-4">${workout.dayOfWeek || 'Day ' + workout.dayCompleted}: ${workout.dayName}</p>` : ''}
                 <div class="space-y-4">
                     ${Object.entries(workout.exercises || {}).map(([name, sets]) => `
                         <div class="bg-gray-800 rounded-xl p-4">
@@ -601,7 +694,7 @@
                                 ${sets.map((set, i) => set ? `
                                     <div class="flex justify-between">
                                         <span>Set ${i + 1}</span>
-                                        <span>${set.weight ? `${set.weight} lbs × ` : ''}${set.reps} ${set.weight ? 'reps' : 's'} ${set.completed ? '✅' : '⬜'}</span>
+                                        <span>${set.reps} ${set.weight ? 'lbs' : 'reps/sec'} ${set.completed ? '✅' : '⬜'}</span>
                                     </div>
                                 ` : '').join('')}
                             </div>
@@ -628,7 +721,7 @@
                 <div class="space-y-4">
                     <div class="bg-gray-800 rounded-2xl p-5">
                         <h3 class="text-lg font-semibold mb-4">Workout Schedule</h3>
-                        <p class="text-gray-400 text-sm mb-4">Customize your workout days and exercises</p>
+                        <p class="text-gray-400 text-sm mb-4">Bodyweight exercises • No equipment needed</p>
                         
                         <div class="space-y-3" id="workoutDaysList">
                             ${workoutSchedule.map((day, index) => `
@@ -636,9 +729,9 @@
                                     <div class="flex items-center gap-3">
                                         <span class="text-2xl">${day.emoji}</span>
                                         <div>
-                                            <div class="font-semibold">Day ${day.day}: ${day.name}</div>
+                                            <div class="font-semibold">${day.dayOfWeek}: ${day.name}</div>
                                             <div class="text-sm text-gray-400">
-                                                ${day.isCardGame ? 'Card game challenge' : `${day.exercises.length} exercises`}
+                                                ${day.isCardGame ? 'Card game challenge' : day.isRecovery ? 'Light recovery' : `${day.exercises.length} exercises`}
                                             </div>
                                         </div>
                                     </div>
@@ -646,17 +739,10 @@
                                         <button onclick="editDay(${index})" class="bg-blue-600 hover:bg-blue-500 px-3 py-2 rounded-lg text-sm font-semibold transition-colors">
                                             Edit
                                         </button>
-                                        <button onclick="deleteDay(${index})" class="bg-red-600 hover:bg-red-500 px-3 py-2 rounded-lg text-sm font-semibold transition-colors">
-                                            Delete
-                                        </button>
                                     </div>
                                 </div>
                             `).join('')}
                         </div>
-                        
-                        <button onclick="addNewDay()" class="w-full mt-4 bg-green-600 hover:bg-green-500 py-3 rounded-xl font-semibold transition-colors">
-                            ➕ Add New Day
-                        </button>
                     </div>
                     
                     <div class="bg-gray-800 rounded-2xl p-5">
@@ -687,7 +773,7 @@
                     Back to Settings
                 </button>
                 
-                <h2 class="text-2xl font-bold mb-6 text-center">Edit Day ${day.day}</h2>
+                <h2 class="text-2xl font-bold mb-6 text-center">Edit ${day.dayOfWeek}</h2>
                 
                 <div class="space-y-4">
                     <div class="bg-gray-800 rounded-2xl p-5">
@@ -729,16 +815,20 @@
                                             <select class="exercise-type bg-gray-600 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none">
                                                 <option value="strength" ${ex.type === 'strength' ? 'selected' : ''}>Strength</option>
                                                 <option value="cardio" ${ex.type === 'cardio' ? 'selected' : ''}>Cardio</option>
+                                                <option value="stretch" ${ex.type === 'stretch' ? 'selected' : ''}>Stretch</option>
+                                                <option value="recovery" ${ex.type === 'recovery' ? 'selected' : ''}>Recovery</option>
                                             </select>
                                             <div class="exercise-params">
                                                 ${ex.type === 'strength' ? `
                                                     <input type="number" value="${ex.sets || 3}" class="exercise-sets w-full bg-gray-600 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Sets">
-                                                ` : `
+                                                ` : ex.type === 'cardio' ? `
                                                     <div class="grid grid-cols-3 gap-1">
                                                         <input type="number" value="${ex.duration || 15}" class="exercise-duration bg-gray-600 rounded-lg px-2 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Min">
                                                         <input type="number" value="${ex.work || 30}" class="exercise-work bg-gray-600 rounded-lg px-2 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Work">
                                                         <input type="number" value="${ex.rest || 30}" class="exercise-rest bg-gray-600 rounded-lg px-2 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Rest">
                                                     </div>
+                                                ` : `
+                                                    <input type="number" value="${ex.sets || ex.duration || 2}" class="exercise-sets w-full bg-gray-600 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Sets/Duration">
                                                 `}
                                             </div>
                                         </div>
@@ -758,85 +848,21 @@
         function renderCardGameEditor(day) {
             return `
                 <div class="bg-gray-800 rounded-2xl p-5">
-                    <h3 class="text-lg font-semibold mb-4">Card Game Rules</h3>
-                    <div class="space-y-3">
+                    <h3 class="text-lg font-semibold mb-4">Card Game Rules (Bodyweight Only)</h3>
+                    <div class="space-y-3" id="exerciseList">
                         ${Object.entries(day.rules).map(([suit, data]) => `
                             <div class="bg-gray-700 rounded-xl p-4">
                                 <div class="flex items-center gap-3 mb-2">
-                                    <span class="text-xl">${data.emoji}</span>
+                                    <span class="${['hearts', 'diamonds'].includes(suit) ? 'text-red-500' : 'text-white'} text-xl">${data.emoji}</span>
                                     <span class="font-semibold capitalize">${suit}</span>
                                 </div>
-                                <input type="text" value="${data.exercise}" class="w-full bg-gray-600 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Exercise name">
-                                <input type="url" value="${data.videoLink || ''}" class="w-full bg-gray-600 rounded-lg px-3 py-2 mt-2 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Video link (optional)">
+                                <input type="text" value="${data.exercise}" data-suit="${suit}" class="card-exercise w-full bg-gray-600 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Exercise name">
+                                <input type="url" value="${data.videoLink || ''}" data-suit="${suit}" class="card-video w-full bg-gray-600 rounded-lg px-3 py-2 mt-2 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Video link (optional)">
                             </div>
                         `).join('')}
                     </div>
                 </div>
             `;
-        }
-
-        function addNewDay() {
-            const newDayNum = workoutSchedule.length + 1;
-            const newDay = {
-                day: newDayNum,
-                name: `New Workout Day ${newDayNum}`,
-                emoji: "💪",
-                exercises: [
-                    { name: "New Exercise", type: "strength", sets: 3, videoLink: "" }
-                ]
-            };
-            workoutSchedule.push(newDay);
-            saveWorkoutSchedule();
-            renderSettingsView(document.getElementById('mainContent'));
-        }
-
-        function deleteDay(dayIndex) {
-            if (confirm(`Are you sure you want to delete Day ${workoutSchedule[dayIndex].day}?`)) {
-                workoutSchedule.splice(dayIndex, 1);
-                // Renumber days
-                workoutSchedule.forEach((day, index) => {
-                    day.day = index + 1;
-                });
-                saveWorkoutSchedule();
-                renderSettingsView(document.getElementById('mainContent'));
-            }
-        }
-
-        function saveDayEdits(dayIndex) {
-            const day = workoutSchedule[dayIndex];
-            day.name = document.getElementById('editDayName').value;
-            day.emoji = document.getElementById('editDayEmoji').value;
-            
-            if (day.isCardGame) {
-                // Save card game rules
-                const ruleElements = document.querySelectorAll('#exerciseList input');
-                let ruleIndex = 0;
-                Object.keys(day.rules).forEach(suit => {
-                    day.rules[suit].exercise = ruleElements[ruleIndex++].value;
-                    day.rules[suit].videoLink = ruleElements[ruleIndex++].value;
-                });
-            } else {
-                // Save exercises
-                const exerciseItems = document.querySelectorAll('.exercise-item');
-                day.exercises = Array.from(exerciseItems).map(item => {
-                    const name = item.querySelector('.exercise-name').value;
-                    const type = item.querySelector('.exercise-type').value;
-                    const videoLink = item.querySelector('.exercise-video').value;
-                    
-                    if (type === 'strength') {
-                        const sets = parseInt(item.querySelector('.exercise-sets').value) || 3;
-                        return { name, type, sets, videoLink };
-                    } else {
-                        const duration = parseInt(item.querySelector('.exercise-duration').value) || 15;
-                        const work = parseInt(item.querySelector('.exercise-work').value) || 30;
-                        const rest = parseInt(item.querySelector('.exercise-rest').value) || 30;
-                        return { name, type, duration, work, rest, videoLink };
-                    }
-                });
-            }
-            
-            saveWorkoutSchedule();
-            showView('settings');
         }
 
         function addExerciseToCurrentDay() {
@@ -851,6 +877,8 @@
                             <select class="exercise-type bg-gray-600 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none" onchange="updateExerciseParams(this)">
                                 <option value="strength" selected>Strength</option>
                                 <option value="cardio">Cardio</option>
+                                <option value="stretch">Stretch</option>
+                                <option value="recovery">Recovery</option>
                             </select>
                             <div class="exercise-params">
                                 <input type="number" value="3" class="exercise-sets w-full bg-gray-600 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Sets">
@@ -871,14 +899,14 @@
         }
 
         function updateExerciseParams(selectElement) {
-            const paramsContainer = selectElement.parentElement.nextElementSibling;
+            const paramsContainer = selectElement.parentElement.querySelector('.exercise-params');
             const type = selectElement.value;
             
             if (type === 'strength') {
                 paramsContainer.innerHTML = `
                     <input type="number" value="3" class="exercise-sets w-full bg-gray-600 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Sets">
                 `;
-            } else {
+            } else if (type === 'cardio') {
                 paramsContainer.innerHTML = `
                     <div class="grid grid-cols-3 gap-1">
                         <input type="number" value="15" class="exercise-duration bg-gray-600 rounded-lg px-2 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Min">
@@ -886,11 +914,59 @@
                         <input type="number" value="30" class="exercise-rest bg-gray-600 rounded-lg px-2 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Rest">
                     </div>
                 `;
+            } else {
+                paramsContainer.innerHTML = `
+                    <input type="number" value="2" class="exercise-sets w-full bg-gray-600 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Sets/Duration">
+                `;
             }
         }
 
+        function saveDayEdits(dayIndex) {
+            const day = workoutSchedule[dayIndex];
+            day.name = document.getElementById('editDayName').value;
+            day.emoji = document.getElementById('editDayEmoji').value;
+            
+            if (day.isCardGame) {
+                // Save card game rules
+                const exerciseInputs = document.querySelectorAll('.card-exercise');
+                const videoInputs = document.querySelectorAll('.card-video');
+                exerciseInputs.forEach(input => {
+                    const suit = input.dataset.suit;
+                    day.rules[suit].exercise = input.value;
+                });
+                videoInputs.forEach(input => {
+                    const suit = input.dataset.suit;
+                    day.rules[suit].videoLink = input.value;
+                });
+            } else {
+                // Save exercises
+                const exerciseItems = document.querySelectorAll('.exercise-item');
+                day.exercises = Array.from(exerciseItems).map(item => {
+                    const name = item.querySelector('.exercise-name').value;
+                    const type = item.querySelector('.exercise-type').value;
+                    const videoLink = item.querySelector('.exercise-video').value;
+                    
+                    if (type === 'strength') {
+                        const sets = parseInt(item.querySelector('.exercise-sets').value) || 3;
+                        return { name, type, sets, videoLink };
+                    } else if (type === 'cardio') {
+                        const duration = parseInt(item.querySelector('.exercise-duration').value) || 15;
+                        const work = parseInt(item.querySelector('.exercise-work').value) || 30;
+                        const rest = parseInt(item.querySelector('.exercise-rest').value) || 30;
+                        return { name, type, duration, work, rest, videoLink };
+                    } else {
+                        const sets = parseInt(item.querySelector('.exercise-sets').value) || 2;
+                        return { name, type, sets, isHold: true, holdTime: 30, videoLink };
+                    }
+                });
+            }
+            
+            saveWorkoutSchedule();
+            showView('settings');
+        }
+
         function resetToDefaults() {
-            if (confirm('Are you sure you want to reset to the default workout schedule? This will overwrite your current schedule.')) {
+            if (confirm('Are you sure you want to reset to the default bodyweight workout schedule? This will overwrite your current schedule.')) {
                 workoutSchedule = JSON.parse(JSON.stringify(defaultWorkoutSchedule));
                 saveWorkoutSchedule();
                 renderSettingsView(document.getElementById('mainContent'));
@@ -997,7 +1073,8 @@
                 <div class="text-center mb-6">
                     <span class="text-4xl">🃏</span>
                     <h2 class="text-2xl font-bold mt-2">Deck of Cards Challenge</h2>
-                    <p class="text-gray-400 mt-1">20 minutes of random exercises!</p>
+                    <p class="text-gray-400 mt-1">20 minutes of bodyweight exercises!</p>
+                    <p class="text-green-400 text-sm mt-1">No equipment needed</p>
                 </div>
 
                 <div class="bg-gray-800 rounded-2xl p-4 mb-6">
@@ -1065,7 +1142,7 @@
                 
                 if (cardGameTimeLeft <= 0) {
                     stopCardGame();
-                    alert('🎉 Time\'s up! Great workout!');
+                    alert('🎉 Time\'s up! Great bodyweight workout!');
                 }
             }, 1000);
             
@@ -1109,7 +1186,8 @@
                 data[currentUser][today] = { exercises: {} };
             }
             data[currentUser][today].dayCompleted = 5;
-            data[currentUser][today].dayName = 'Deck of Cards Challenge';
+            data[currentUser][today].dayName = 'Full Body Challenge';
+            data[currentUser][today].dayOfWeek = 'Friday';
             data[currentUser][today].exercises['Deck of Cards'] = [{ reps: cardsDrawn, completed: true }];
             saveWorkoutData(data);
             

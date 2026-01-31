@@ -139,20 +139,94 @@
             }
         ];
 
-        // Load workout schedule from localStorage or use defaults
-        let workoutSchedule = JSON.parse(localStorage.getItem('workoutSchedule')) || defaultWorkoutSchedule;
-
-        function saveWorkoutSchedule() {
-            localStorage.setItem('workoutSchedule', JSON.stringify(workoutSchedule));
-        }
-
         // ===== APP STATE =====
         let currentUser = localStorage.getItem('currentUser') || 'Father';
         let currentView = 'home';
         let timerInterval = null;
         let timerState = { running: false, timeLeft: 0, isWork: true, workTime: 30, restTime: 30 };
+        let workoutSchedule = defaultWorkoutSchedule; // Default, will be loaded from API
 
-        // ===== LOCAL STORAGE FUNCTIONS =====
+        // ===== API CONFIG =====
+        const API_BASE = '/api';
+
+        // ===== API FUNCTIONS =====
+        async function saveWorkoutToAPI(workout) {
+            try {
+                const response = await fetch(`${API_BASE}/workouts`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(workout)
+                });
+                if (!response.ok) throw new Error('Failed to save workout');
+                return await response.json();
+            } catch (error) {
+                console.error('Error saving to API:', error);
+                // Fallback to localStorage if API fails
+                return null;
+            }
+        }
+
+        async function loadWorkoutsFromAPI(user) {
+            try {
+                const response = await fetch(`${API_BASE}/workouts?user=${user}`);
+                if (!response.ok) throw new Error('Failed to load workouts');
+                return await response.json();
+            } catch (error) {
+                console.error('Error loading from API:', error);
+                return [];
+            }
+        }
+
+        async function loadScheduleFromAPI(user) {
+            try {
+                const response = await fetch(`${API_BASE}/schedules/${user}`);
+                if (response.status === 404) return null; // No schedule
+                if (!response.ok) throw new Error('Failed to load schedule');
+                return await response.json();
+            } catch (error) {
+                console.error('Error loading schedule from API:', error);
+                return null;
+            }
+        }
+
+        async function saveScheduleToAPI(user, schedule) {
+            try {
+                const response = await fetch(`${API_BASE}/schedules/${user}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(schedule)
+                });
+                if (!response.ok) throw new Error('Failed to save schedule');
+                return await response.json();
+            } catch (error) {
+                console.error('Error saving schedule to API:', error);
+                return null;
+            }
+        }
+
+        async function loadSchedule() {
+            let apiSchedule = await loadScheduleFromAPI(currentUser);
+            if (!apiSchedule) {
+                apiSchedule = await loadScheduleFromAPI('default');
+            }
+            if (apiSchedule) {
+                workoutSchedule = apiSchedule;
+            } else {
+                workoutSchedule = defaultWorkoutSchedule;
+            }
+        }
+
+        async function saveWorkoutSchedule() {
+            localStorage.setItem('workoutSchedule', JSON.stringify(workoutSchedule)); // Keep local for backup
+            await saveScheduleToAPI(currentUser, workoutSchedule);
+        }
+
+        // ===== SYNC WRAPPERS FOR ONCLICK =====
+        function handleAddNewDay() { console.log('handleAddNewDay called'); addNewDay(); }
+        function handleDeleteDay(index) { console.log('handleDeleteDay called', index); deleteDay(index); }
+        function handleEditDay(index) { console.log('handleEditDay called', index); editDay(index); }
+        function handleSaveDayEdits(index) { console.log('handleSaveDayEdits called', index); saveDayEdits(index); }
+        function handleResetToDefaults() { console.log('handleResetToDefaults called'); resetToDefaults(); }
         function getWorkoutData() {
             const data = localStorage.getItem('workoutData');
             return data ? JSON.parse(data) : { Father: {}, Son: {} };
@@ -203,6 +277,7 @@
 
         // ===== VIEW RENDERING =====
         function showView(view) {
+            console.log('showView called with', view);
             currentView = view;
             document.querySelectorAll('.nav-btn').forEach(btn => {
                 btn.classList.toggle('text-blue-400', btn.dataset.view === view);
@@ -210,6 +285,7 @@
             });
 
             const main = document.getElementById('mainContent');
+            console.log('mainContent', main);
             
             switch(view) {
                 case 'home': renderHomeView(main); break;
@@ -448,7 +524,7 @@
             saveExerciseSet(exerciseName, setIndex, weight, reps, completed);
         }
 
-        function completeWorkout(dayIndex) {
+        async function completeWorkout(dayIndex) {
             const data = getWorkoutData();
             const today = getTodayKey();
             if (!data[currentUser][today]) {
@@ -616,17 +692,21 @@
         }
 
         // ===== HISTORY VIEW =====
-        function renderHistoryView(container) {
+        async function renderHistoryView(container) {
             const data = getWorkoutData();
             const userData = data[currentUser] || {};
-            const dates = Object.keys(userData).sort().reverse();
+            
+            // Load from API
+            const apiWorkouts = await loadWorkoutsFromAPI(currentUser);
+            // For now, display API workouts
+            const workouts = apiWorkouts.length > 0 ? apiWorkouts : Object.keys(userData).map(date => ({ date, ...userData[date] }));
 
             container.innerHTML = `
                 <h2 class="text-2xl font-bold mb-6 text-center">📊 Workout History</h2>
                 <div class="mb-4 text-center text-gray-400">
                     Showing history for <span class="text-blue-400 font-semibold">${currentUser}</span>
                 </div>
-                ${dates.length === 0 ? `
+                ${workouts.length === 0 ? `
                     <div class="text-center py-12 text-gray-500">
                         <span class="text-6xl">📭</span>
                         <p class="mt-4">No workouts recorded yet.</p>
@@ -634,14 +714,17 @@
                     </div>
                 ` : `
                     <div class="space-y-3">
-                        ${dates.map(date => {
-                            const workout = userData[date];
-                            const displayDate = new Date(date + 'T12:00:00').toLocaleDateString('en-US', { 
+                        ${workouts.map((workout) => {
+                            const displayDate = apiWorkouts.length > 0 ? new Date(workout.date).toLocaleDateString('en-US', { 
+                                weekday: 'short', 
+                                month: 'short', 
+                                day: 'numeric' 
+                            }) : new Date(workout.date + 'T12:00:00').toLocaleDateString('en-US', { 
                                 weekday: 'short', 
                                 month: 'short', 
                                 day: 'numeric' 
                             });
-                            const exerciseCount = Object.keys(workout.exercises || {}).length;
+                            const exerciseCount = apiWorkouts.length > 0 ? (workout.exercises ? workout.exercises.length : 0) : Object.keys(workout.exercises || {}).length;
                             return `
                                 <div class="bg-gray-800 rounded-xl p-4 flex items-center justify-between">
                                     <div>
@@ -652,7 +735,7 @@
                                             <div class="text-sm text-gray-400">${exerciseCount} exercises logged</div>
                                         `}
                                     </div>
-                                    <button onclick="showHistoryDetail('${date}')" class="text-blue-400 hover:text-blue-300">
+                                    <button onclick="showHistoryDetail('${workout.id || workout.date}')" class="text-blue-400 hover:text-blue-300">
                                         View →
                                     </button>
                                 </div>
@@ -668,15 +751,31 @@
             `;
         }
 
-        function showHistoryDetail(date) {
-            const data = getWorkoutData();
-            const workout = data[currentUser][date];
-            const displayDate = new Date(date + 'T12:00:00').toLocaleDateString('en-US', { 
-                weekday: 'long', 
-                month: 'long', 
-                day: 'numeric',
-                year: 'numeric'
-            });
+        async function showHistoryDetail(identifier) {
+            let workout;
+            let displayDate;
+            if (isNaN(identifier)) {
+                // local date
+                const data = getWorkoutData();
+                workout = data[currentUser][identifier];
+                workout.date = identifier;
+                displayDate = new Date(identifier + 'T12:00:00').toLocaleDateString('en-US', { 
+                    weekday: 'long', 
+                    month: 'long', 
+                    day: 'numeric',
+                    year: 'numeric'
+                });
+            } else {
+                // API id
+                const response = await fetch(`${API_BASE}/workouts/${identifier}`);
+                workout = await response.json();
+                displayDate = new Date(workout.date).toLocaleDateString('en-US', { 
+                    weekday: 'long', 
+                    month: 'long', 
+                    day: 'numeric',
+                    year: 'numeric'
+                });
+            }
 
             const container = document.getElementById('mainContent');
             container.innerHTML = `
@@ -687,7 +786,7 @@
                 <h2 class="text-xl font-bold mb-2">${displayDate}</h2>
                 ${workout.dayCompleted ? `<p class="text-green-400 mb-4">${workout.dayOfWeek || 'Day ' + workout.dayCompleted}: ${workout.dayName}</p>` : ''}
                 <div class="space-y-4">
-                    ${Object.entries(workout.exercises || {}).map(([name, sets]) => `
+                    ${(workout.exercises || []).map(ex => `
                         <div class="bg-gray-800 rounded-xl p-4">
                             <h3 class="font-semibold mb-2">${name}</h3>
                             <div class="space-y-1 text-sm text-gray-400">
@@ -715,6 +814,8 @@
 
         // ===== SETTINGS VIEW =====
         function renderSettingsView(container) {
+            console.log('renderSettingsView called');
+            console.log('workoutSchedule', workoutSchedule);
             container.innerHTML = `
                 <h2 class="text-2xl font-bold mb-6 text-center">⚙️ Settings</h2>
                 
@@ -736,7 +837,7 @@
                                         </div>
                                     </div>
                                     <div class="flex gap-2">
-                                        <button onclick="editDay(${index})" class="bg-blue-600 hover:bg-blue-500 px-3 py-2 rounded-lg text-sm font-semibold transition-colors">
+                                        <button onclick="handleEditDay(${index})" class="bg-blue-600 hover:bg-blue-500 px-3 py-2 rounded-lg text-sm font-semibold transition-colors">
                                             Edit
                                         </button>
                                     </div>
@@ -748,13 +849,13 @@
                     <div class="bg-gray-800 rounded-2xl p-5">
                         <h3 class="text-lg font-semibold mb-4">Data Management</h3>
                         <div class="space-y-3">
-                            <button onclick="resetToDefaults()" class="w-full bg-yellow-600 hover:bg-yellow-500 py-3 rounded-xl font-semibold transition-colors">
+                            <button onclick="handleResetToDefaults()" class="w-full bg-yellow-600 hover:bg-yellow-500 py-3 rounded-xl font-semibold transition-colors">
                                 🔄 Reset to Default Schedule
                             </button>
-                            <button onclick="exportData()" class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-xl font-semibold transition-colors">
+                            <button onclick="handleExportData()" class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-xl font-semibold transition-colors">
                                 📤 Export All Data
                             </button>
-                            <button onclick="importData()" class="w-full bg-purple-600 hover:bg-purple-500 py-3 rounded-xl font-semibold transition-colors">
+                            <button onclick="handleImportData()" class="w-full bg-purple-600 hover:bg-purple-500 py-3 rounded-xl font-semibold transition-colors">
                                 📥 Import Data
                             </button>
                         </div>
@@ -788,7 +889,7 @@
                     
                     ${day.isCardGame ? renderCardGameEditor(day) : renderExerciseEditor(day)}
                     
-                    <button onclick="saveDayEdits(${dayIndex})" class="w-full bg-green-600 hover:bg-green-500 py-4 rounded-2xl font-bold text-lg transition-colors">
+                    <button onclick="handleSaveDayEdits(${dayIndex})" class="w-full bg-green-600 hover:bg-green-500 py-4 rounded-2xl font-bold text-lg transition-colors">
                         💾 Save Changes
                     </button>
                 </div>
@@ -968,7 +1069,7 @@
         function resetToDefaults() {
             if (confirm('Are you sure you want to reset to the default bodyweight workout schedule? This will overwrite your current schedule.')) {
                 workoutSchedule = JSON.parse(JSON.stringify(defaultWorkoutSchedule));
-                saveWorkoutSchedule();
+                await saveWorkoutSchedule();
                 renderSettingsView(document.getElementById('mainContent'));
             }
         }
@@ -1202,7 +1303,12 @@
         }
 
         // ===== INITIALIZE APP =====
-        showView('home');
+        (async () => {
+            console.log('Initializing app');
+            await loadSchedule();
+            console.log('Schedule loaded, showing home');
+            showView('home');
+        })();
     </script>
 </body>
 </html>

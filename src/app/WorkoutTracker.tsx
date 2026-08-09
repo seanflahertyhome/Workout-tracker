@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { defaultWorkoutSchedule } from "@/lib/constants";
+import { defaultWorkoutSchedule, formatHoldTime } from "@/lib/constants";
 import { 
   Home, 
   Timer as TimerIcon, 
@@ -260,7 +260,7 @@ export default function WorkoutTracker({ user }: { user: any }) {
                   <div>
                     <h3 className="text-xl font-bold text-white">{ex.name}</h3>
                     <p className="text-sm text-gray-400">
-                      {ex.isHold ? `${ex.sets} sets • ${ex.holdTime}s hold` : 
+                      {ex.isHold ? `${ex.sets} sets • ${formatHoldTime(ex.holdTime)} hold` :
                        ex.type === 'cardio' ? `${ex.duration} min • ${ex.work}s work / ${ex.rest}s rest` :
                        `${ex.sets} sets`}
                     </p>

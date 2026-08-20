@@ -2,6 +2,8 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+> **Global rules:** `~/.claude/CLAUDE.md` applies to every repo and is loaded automatically each session — this file only covers what's specific to *this* repo. A rule that should hold everywhere belongs in the global file, not copy-pasted here.
+
 ## What this is
 
 A Next.js (App Router) workout tracker: log daily workouts and manage a recurring schedule,

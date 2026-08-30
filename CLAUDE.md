@@ -28,9 +28,12 @@ are cheap and this is the closest thing to a validation loop this repo has.
 
 - `src/db/schema.ts` — the entire schema: `users` (email/password/bcrypt hash), `workouts`
   (one row per user per date, exercises/sets stored as a `jsonb` blob rather than normalized
-  tables), `schedules` (one `jsonb` blob per user for the recurring plan). `drizzle.config.json`
-  points at a local Postgres (`postgresql://postgres:postgres@127.0.0.1:5432/app_db`) — there's
-  no migrations directory, schema changes are pushed directly with `drizzle-kit push`.
+  tables), `schedules` (one `jsonb` blob per user for the recurring plan). There's no migrations
+  directory, schema changes are pushed directly with `drizzle-kit push`.
+- Two separate DB connection strings, don't confuse them: `drizzle.config.json` hardcodes a local
+  Postgres URL (`postgresql://postgres:postgres@127.0.0.1:5432/app_db`) used only by the
+  `drizzle-kit` CLI; the running app (`src/db/index.ts`) reads `DATABASE_URL` from the environment
+  and throws at startup if it's unset.
 - `src/auth.ts` — NextAuth `Credentials` provider; `authorize()` looks up the user by email,
   compares the password with bcrypt, and the `session` callback copies `token.sub` onto
   `session.user.id` (Drizzle's UUID `id`, not NextAuth's default). Any code needing the current
@@ -44,6 +47,10 @@ are cheap and this is the closest thing to a validation loop this repo has.
   `login/`, `register/` are the route entry points. `src/app/api/health/route.ts` is a plain
   liveness check, `src/app/api/register/route.ts` handles account creation (hashes the password
   before inserting into `users`).
+- `src/lib/constants.ts` — hardcodes the default weekly schedule (`defaultWorkoutSchedule`: 5 days
+  of exercises/stretches/a card-based workout, each with a YouTube search link) and the
+  `formatHoldTime` display helper. This is the seed data a new user's schedule starts from, not
+  just static config — check it when changing the exercise/schedule data shape.
 
 ## Working in this repo
 

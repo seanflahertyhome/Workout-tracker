@@ -8,7 +8,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 A Next.js (App Router) workout tracker: log daily workouts and manage a recurring schedule,
 per-user, backed by Postgres via Drizzle ORM with credentials-based auth (NextAuth v5 beta +
-bcrypt).
+bcrypt). The database is Neon Postgres, provisioned through the Vercel Marketplace and linked to
+the `workout-tracker` Vercel project (team `flaherty-dev-factory`).
 
 ## Commands
 
@@ -21,6 +22,16 @@ npm run typecheck          # tsc --noEmit
 npx drizzle-kit push         # push schema.ts changes to the database (no migration files in-repo)
 ```
 
+`drizzle-kit` and plain `tsx`/`node` scripts do **not** auto-load `.env.local` (only Next.js does) —
+source it first, e.g.:
+
+```bash
+node -e "require('dotenv').config({path:'.env.local'}); require('child_process').execSync('npx drizzle-kit push', {stdio:'inherit'})"
+```
+
+Run `vercel env pull --yes` to refresh `.env.local` if the Neon credentials rotate or a teammate
+provisions a new branch.
+
 There is no test suite configured. Before delivering a change, run `lint` and `typecheck` — both
 are cheap and this is the closest thing to a validation loop this repo has.
 
@@ -30,10 +41,9 @@ are cheap and this is the closest thing to a validation loop this repo has.
   (one row per user per date, exercises/sets stored as a `jsonb` blob rather than normalized
   tables), `schedules` (one `jsonb` blob per user for the recurring plan). There's no migrations
   directory, schema changes are pushed directly with `drizzle-kit push`.
-- Two separate DB connection strings, don't confuse them: `drizzle.config.json` hardcodes a local
-  Postgres URL (`postgresql://postgres:postgres@127.0.0.1:5432/app_db`) used only by the
-  `drizzle-kit` CLI; the running app (`src/db/index.ts`) reads `DATABASE_URL` from the environment
-  and throws at startup if it's unset.
+- `drizzle.config.ts` and `src/db/index.ts` both read `DATABASE_URL` from the environment (Neon's
+  pooled connection string) — there's a single source of truth for the connection, no separate
+  hardcoded config to keep in sync. Both throw at startup/config-load time if it's unset.
 - `src/auth.ts` — NextAuth `Credentials` provider; `authorize()` looks up the user by email,
   compares the password with bcrypt, and the `session` callback copies `token.sub` onto
   `session.user.id` (Drizzle's UUID `id`, not NextAuth's default). Any code needing the current
